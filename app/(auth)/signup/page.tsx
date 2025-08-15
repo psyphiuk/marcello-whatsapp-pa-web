@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
+import { validatePassword, getPasswordStrengthLabel, getPasswordStrengthColor } from '@/lib/security/password'
 import styles from '../auth.module.scss'
 
 export default function SignupPage() {
@@ -20,18 +21,37 @@ export default function SignupPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, errors: [] as string[] })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     })
+    
+    // Validate password strength on change
+    if (name === 'password') {
+      const validation = validatePassword(value)
+      setPasswordStrength({
+        score: validation.score,
+        errors: validation.errors
+      })
+    }
   }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    // Validate password strength
+    const passwordValidation = validatePassword(formData.password)
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors.join('. '))
+      setLoading(false)
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Le password non corrispondono')
@@ -148,11 +168,54 @@ export default function SignupPage() {
               type="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Almeno 8 caratteri"
-              minLength={8}
+              placeholder="Almeno 12 caratteri"
+              minLength={12}
               required
               disabled={loading}
             />
+            {formData.password && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.25rem'
+                }}>
+                  <div style={{
+                    flex: 1,
+                    height: '4px',
+                    backgroundColor: '#e0e0e0',
+                    borderRadius: '2px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${(passwordStrength.score / 5) * 100}%`,
+                      height: '100%',
+                      backgroundColor: getPasswordStrengthColor(passwordStrength.score),
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    color: getPasswordStrengthColor(passwordStrength.score)
+                  }}>
+                    {getPasswordStrengthLabel(passwordStrength.score)}
+                  </span>
+                </div>
+                {passwordStrength.errors.length > 0 && (
+                  <ul style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--error-color)',
+                    margin: '0.25rem 0',
+                    paddingLeft: '1rem'
+                  }}>
+                    {passwordStrength.errors.map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
 
           <div className={styles.formGroup}>
@@ -164,7 +227,7 @@ export default function SignupPage() {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="Ripeti la password"
-              minLength={8}
+              minLength={12}
               required
               disabled={loading}
             />

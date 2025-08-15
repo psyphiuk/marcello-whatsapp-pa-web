@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { generateSecurePassword } from '@/lib/security/password'
 import styles from '../admin.module.scss'
 
 interface Customer {
@@ -333,7 +334,7 @@ function AddCustomerModal({ onClose, onSuccess }: { onClose: () => void, onSucce
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        password: Math.random().toString(36).slice(-8), // Generate random password
+        password: generateSecurePassword(16), // Generate secure password
         options: {
           data: {
             company_name: formData.companyName,

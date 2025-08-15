@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { withRateLimit } from '@/lib/security/ratelimit'
+import { validateEmail, validateCompanyName, validateDiscountCode, validatePlan } from '@/lib/security/validation'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia'
@@ -11,21 +13,68 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
-// Special codes (backend only - never exposed to frontend)
-const SPECIAL_CODES = {
-  ADMIN_CODE: 'marcello-psyphi',
-  FREE_SETUP_CODE: 'configurazione-gratuita' // Italian for "free-setup"
+// Verify this is server-side only
+if (typeof window !== 'undefined') {
+  throw new Error('Server-only code accessed from client')
 }
 
-export async function POST(request: NextRequest) {
+// Special codes from environment variables (backend only)
+const SPECIAL_CODES = {
+  ADMIN_CODE: process.env.ADMIN_ACTIVATION_CODE || '',
+  FREE_SETUP_CODE: process.env.FREE_SETUP_CODE || ''
+}
+
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
+    const body = await request.json()
     const { 
       customerId, 
       plan, 
       discountCode,
       email,
       companyName 
-    } = await request.json()
+    } = body
+
+    // Validate inputs
+    if (email) {
+      const emailValidation = validateEmail(email)
+      if (!emailValidation.isValid) {
+        return NextResponse.json(
+          { error: emailValidation.errors[0].message },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (companyName) {
+      const nameValidation = validateCompanyName(companyName)
+      if (!nameValidation.isValid) {
+        return NextResponse.json(
+          { error: nameValidation.errors[0].message },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (plan) {
+      const planValidation = validatePlan(plan)
+      if (!planValidation.isValid) {
+        return NextResponse.json(
+          { error: planValidation.errors[0].message },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (discountCode) {
+      const codeValidation = validateDiscountCode(discountCode)
+      if (!codeValidation.isValid) {
+        return NextResponse.json(
+          { error: codeValidation.errors[0].message },
+          { status: 400 }
+        )
+      }
+    }
 
     // Get pricing configuration from database
     const { data: pricingConfig } = await supabase
@@ -174,4 +223,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+}, 'payment')

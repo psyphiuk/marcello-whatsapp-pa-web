@@ -7,17 +7,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "security:audit": "yarn audit --severity moderate",
+    "security:check": "yarn security:audit && yarn lint",
+    "security:fix": "yarn audit fix",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@stripe/stripe-js": "^7.8.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/supabase-js": "^2.55.0",
+    "@types/dompurify": "^3.2.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
+    "@types/validator": "^13.15.2",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.35.3",
+    "isomorphic-dompurify": "^2.26.0",
     "next": "^15.4.6",
+    "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "stripe": "^18.4.0"
+    "speakeasy": "^2.0.0",
+    "stripe": "^18.4.0",
+    "validator": "^13.15.15"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
