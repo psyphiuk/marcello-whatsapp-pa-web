@@ -71,6 +71,7 @@ export default function AdminLayout({
     { path: '/admin', label: 'Dashboard', icon: '📊' },
     { path: '/admin/customers', label: 'Clienti', icon: '👥' },
     { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/admin/pricing', label: 'Prezzi', icon: '💰' },
     { path: '/admin/billing', label: 'Fatturazione', icon: '💳' },
     { path: '/admin/health', label: 'Sistema', icon: '🔧' },
   ]

@@ -187,6 +187,33 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
 
 function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
   const [selectedPlan, setSelectedPlan] = useState(data.plan || 'basic')
+  const [discountCode, setDiscountCode] = useState('')
+  const [pricing, setPricing] = useState({
+    setupFee: 500,
+    basicMonthly: 100,
+    proMonthly: 200
+  })
+
+  useEffect(() => {
+    // Load pricing configuration
+    loadPricing()
+  }, [])
+
+  const loadPricing = async () => {
+    try {
+      const { data: config } = await supabase
+        .from('system_config')
+        .select('*')
+        .eq('key', 'pricing')
+        .single()
+
+      if (config?.value) {
+        setPricing(config.value)
+      }
+    } catch (error) {
+      console.error('Error loading pricing:', error)
+    }
+  }
 
   return (
     <div className={styles.stepForm}>
@@ -200,7 +227,7 @@ function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
         >
           <h3>Basic</h3>
           <div className={styles.price}>
-            <span className={styles.amount}>€100</span>
+            <span className={styles.amount}>€{pricing.basicMonthly}</span>
             <span className={styles.period}>/mese</span>
           </div>
           <ul>
@@ -219,7 +246,7 @@ function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
           <div className={styles.badge}>Consigliato</div>
           <h3>Professional</h3>
           <div className={styles.price}>
-            <span className={styles.amount}>€200</span>
+            <span className={styles.amount}>€{pricing.proMonthly}</span>
             <span className={styles.period}>/mese</span>
           </div>
           <ul>
@@ -234,7 +261,24 @@ function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
       </div>
 
       <div className={styles.setupFee}>
-        Nota: È prevista una configurazione iniziale di €500 (una tantum)
+        Nota: È prevista una configurazione iniziale di €{pricing.setupFee} (una tantum)
+      </div>
+
+      <div className={styles.discountSection}>
+        <label>Hai un codice sconto?</label>
+        <input
+          type="text"
+          value={discountCode}
+          onChange={(e) => setDiscountCode(e.target.value)}
+          placeholder="Inserisci il codice"
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            border: '2px solid var(--border-color)',
+            borderRadius: 'var(--border-radius)',
+            marginTop: '0.5rem'
+          }}
+        />
       </div>
 
       <div className={styles.stepActions}>
@@ -242,7 +286,7 @@ function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
           Indietro
         </button>
         <button
-          onClick={() => onNext({ plan: selectedPlan })}
+          onClick={() => onNext({ plan: selectedPlan, discountCode, pricing })}
           className="button button-primary"
         >
           Continua
@@ -253,42 +297,62 @@ function PlanSelectionStep({ onNext, onBack, data }: StepProps) {
 }
 
 function ReviewStep({ onNext, onBack, data }: StepProps) {
-  const [saving, setSaving] = useState(false)
+  const [processing, setProcessing] = useState(false)
   const router = useRouter()
 
-  const handleComplete = async () => {
-    setSaving(true)
+  const handlePayment = async () => {
+    setProcessing(true)
     
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        // Update customer record
-        const phoneNumbers = [data.phoneNumber]
-        if (data.additionalPhones) {
-          phoneNumbers.push(...data.additionalPhones.split('\n').filter(Boolean))
-        }
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
 
-        const { error } = await supabase
-          .from('customers')
-          .update({
-            company_name: data.companyName,
-            phone_numbers: phoneNumbers,
-            plan: data.plan,
-            settings: {
-              onboarding_completed: true,
-              onboarding_date: new Date().toISOString(),
-            }
-          })
-          .eq('id', user.id)
+      // Update customer record first
+      const phoneNumbers = [data.phoneNumber]
+      if (data.additionalPhones) {
+        phoneNumbers.push(...data.additionalPhones.split('\n').filter(Boolean))
+      }
 
-        if (error) throw error
+      await supabase
+        .from('customers')
+        .update({
+          company_name: data.companyName,
+          phone_numbers: phoneNumbers,
+          plan: data.plan,
+        })
+        .eq('id', user.id)
 
-        // Redirect to dashboard
-        router.push('/dashboard')
+      // Create Stripe checkout session
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId: user.id,
+          plan: data.plan,
+          discountCode: data.discountCode || '',
+          email: user.email,
+          companyName: data.companyName
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      // Redirect to Stripe checkout
+      if (result.url) {
+        window.location.href = result.url
       }
     } catch (error: any) {
-      console.error('Error saving setup:', error)
-      setSaving(false)
+      console.error('Error processing payment:', error)
+      alert('Errore durante il processo di pagamento: ' + error.message)
+      setProcessing(false)
     }
   }
 
@@ -326,8 +390,16 @@ function ReviewStep({ onNext, onBack, data }: StepProps) {
         <dl>
           <dt>Piano:</dt>
           <dd>{data.plan === 'pro' ? 'Professional' : 'Basic'}</dd>
+          <dt>Configurazione Iniziale:</dt>
+          <dd>€{data.pricing?.setupFee || 500} (una tantum)</dd>
           <dt>Costo Mensile:</dt>
-          <dd>€{data.plan === 'pro' ? '200' : '100'}/mese</dd>
+          <dd>€{data.plan === 'pro' ? (data.pricing?.proMonthly || 200) : (data.pricing?.basicMonthly || 100)}/mese</dd>
+          {data.discountCode && (
+            <>
+              <dt>Codice Sconto:</dt>
+              <dd>{data.discountCode}</dd>
+            </>
+          )}
         </dl>
       </div>
 
@@ -345,11 +417,11 @@ function ReviewStep({ onNext, onBack, data }: StepProps) {
           Indietro
         </button>
         <button
-          onClick={handleComplete}
+          onClick={handlePayment}
           className="button button-primary"
-          disabled={saving}
+          disabled={processing}
         >
-          {saving ? 'Completamento...' : 'Completa Configurazione'}
+          {processing ? 'Elaborazione...' : 'Procedi al Pagamento'}
         </button>
       </div>
     </div>
