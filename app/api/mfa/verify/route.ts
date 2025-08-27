@@ -30,7 +30,7 @@ export const POST = withRateLimit(async (req: NextRequest) => {
         userId,
         action: 'MFA_VERIFY_SUCCESS',
         resource: 'authentication',
-        ipAddress: req.ip || req.headers.get('x-forwarded-for') || undefined,
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
         userAgent: req.headers.get('user-agent') || undefined,
         metadata: { isBackupCode }
       })
@@ -45,7 +45,7 @@ export const POST = withRateLimit(async (req: NextRequest) => {
         userId,
         action: 'MFA_VERIFY_FAILED',
         resource: 'authentication',
-        ipAddress: req.ip || req.headers.get('x-forwarded-for') || undefined,
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
         userAgent: req.headers.get('user-agent') || undefined,
         errorMessage: result.error,
         metadata: { isBackupCode }

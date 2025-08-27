@@ -58,11 +58,11 @@ function getRedisClient(): Redis | null {
 // In-memory rate limiter for development (not recommended for production)
 class InMemoryRateLimiter {
   private requests: Map<string, { count: number; resetTime: number }> = new Map()
-  private readonly limit: number
+  private readonly requestLimit: number
   private readonly windowMs: number
 
   constructor(requests: number, window: string) {
-    this.limit = requests
+    this.requestLimit = requests
     // Parse window string (e.g., "1 m" -> 60000ms)
     const [value, unit] = window.split(' ')
     const multipliers: Record<string, number> = {
@@ -84,17 +84,17 @@ class InMemoryRateLimiter {
       this.requests.set(identifier, { count: 1, resetTime })
       return {
         success: true,
-        limit: this.limit,
-        remaining: this.limit - 1,
+        limit: this.requestLimit,
+        remaining: this.requestLimit - 1,
         reset: resetTime
       }
     }
 
-    if (record.count >= this.limit) {
+    if (record.count >= this.requestLimit) {
       // Rate limit exceeded
       return {
         success: false,
-        limit: this.limit,
+        limit: this.requestLimit,
         remaining: 0,
         reset: record.resetTime
       }
@@ -104,8 +104,8 @@ class InMemoryRateLimiter {
     record.count++
     return {
       success: true,
-      limit: this.limit,
-      remaining: this.limit - record.count,
+      limit: this.requestLimit,
+      remaining: this.requestLimit - record.count,
       reset: record.resetTime
     }
   }
@@ -121,9 +121,16 @@ function getRateLimiter(type: keyof typeof rateLimitConfigs): Ratelimit | InMemo
     // Use Upstash rate limiter with Redis
     if (!ratelimiters.has(type)) {
       const config = rateLimitConfigs[type]
+      // Parse window string to duration
+      const [value, unit] = config.window.split(' ')
+      const unitMap: Record<string, 's' | 'm' | 'h' | 'd'> = {
+        's': 's', 'm': 'm', 'h': 'h', 'd': 'd'
+      }
+      const duration = `${value}${unitMap[unit] || 'm'}` as `${number}${'s' | 'm' | 'h' | 'd'}`
+      
       ratelimiters.set(type, new Ratelimit({
         redis: redisClient,
-        limiter: Ratelimit.slidingWindow(config.requests, config.window),
+        limiter: Ratelimit.slidingWindow(config.requests, duration),
         analytics: true,
         prefix: `ratelimit:${type}`
       }))
@@ -148,7 +155,7 @@ export async function rateLimit(
 ): Promise<NextResponse | null> {
   try {
     // Get identifier (IP address or user ID)
-    const identifier = request.ip || request.headers.get('x-forwarded-for') || 'anonymous'
+    const identifier = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous'
     
     const limiter = getRateLimiter(type)
     const { success, limit, remaining, reset } = await limiter.limit(identifier)

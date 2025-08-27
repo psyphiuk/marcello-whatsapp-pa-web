@@ -176,7 +176,7 @@ export function extractRequestInfo(request: NextRequest): {
   requestPath: string
 } {
   return {
-    ipAddress: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+    ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     userAgent: request.headers.get('user-agent') || 'unknown',
     requestMethod: request.method,
     requestPath: request.nextUrl.pathname

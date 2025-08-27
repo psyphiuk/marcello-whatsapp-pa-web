@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withAdminAuth, logAdminAction, createAdminClient } from '@/lib/security/admin'
+import { withAdminAuth, createAdminClient } from '@/lib/security/admin'
+import { logAdminAction } from '@/lib/security/audit'
 import { withAdminRateLimit } from '@/lib/security/ratelimit'
 
 // GET /api/admin/customers - List all customers (admin only)

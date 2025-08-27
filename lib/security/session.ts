@@ -52,7 +52,7 @@ export async function createSession(
     const { error } = await supabase.from('user_sessions').insert({
       customer_id: userId,
       session_token: token,
-      ip_address: request.ip || request.headers.get('x-forwarded-for') || null,
+      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
       user_agent: request.headers.get('user-agent') || null,
       last_activity: now.toISOString(),
       expires_at: expiresAt.toISOString(),
@@ -356,13 +356,15 @@ export function withSession(
 
     // Update session cookie if refreshed
     if (responseToken !== token && responseExpiresAt) {
-      response.cookies.set(SESSION_CONFIG.COOKIE_NAME, responseToken, {
-        httpOnly: true,
-        secure: SESSION_CONFIG.SECURE_COOKIE,
-        sameSite: 'strict',
-        expires: responseExpiresAt,
-        path: '/'
-      })
+      if (response instanceof NextResponse) {
+        response.cookies.set(SESSION_CONFIG.COOKIE_NAME, responseToken, {
+          httpOnly: true,
+          secure: SESSION_CONFIG.SECURE_COOKIE,
+          sameSite: 'strict',
+          expires: responseExpiresAt,
+          path: '/'
+        })
+      }
     }
 
     return response

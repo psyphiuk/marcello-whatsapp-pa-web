@@ -67,7 +67,7 @@ function getSessionId(request: NextRequest): string {
   }
   
   // Fallback to IP address
-  return request.ip || request.headers.get('x-forwarded-for') || 'anonymous'
+  return request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous'
 }
 
 /**

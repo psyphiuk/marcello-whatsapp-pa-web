@@ -103,7 +103,7 @@ export function withAdminAuth(
 /**
  * Log admin actions for audit trail
  */
-export async function logAdminAction(
+export async function logAdminActivityToAudit(
   userId: string,
   action: string,
   resource: string,
