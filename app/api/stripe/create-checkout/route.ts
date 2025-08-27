@@ -4,20 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 import { withRateLimit } from '@/lib/security/ratelimit'
 import { validateEmail, validateCompanyName, validateDiscountCode, validatePlan } from '@/lib/security/validation'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-07-30.basil'
-})
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
-
-// Verify this is server-side only
-if (typeof window !== 'undefined') {
-  throw new Error('Server-only code accessed from client')
-}
-
 // Special codes from environment variables (backend only)
 const SPECIAL_CODES = {
   ADMIN_CODE: process.env.ADMIN_ACTIVATION_CODE || '',
@@ -25,6 +11,16 @@ const SPECIAL_CODES = {
 }
 
 export const POST = withRateLimit(async (request: NextRequest) => {
+  // Initialize Stripe and Supabase inside the function to avoid build-time initialization
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2025-07-30.basil'
+  })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+  
   try {
     const body = await request.json()
     const { 
