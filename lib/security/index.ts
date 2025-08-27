@@ -5,6 +5,7 @@
 export * from './admin'
 export * from './audit'
 export * from './csrf'
+export * from './csrf-client'
 export * from './password'
 export * from './ratelimit'
 export * from './validation'

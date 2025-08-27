@@ -1,5 +1,21 @@
 /** @type {import('next').NextConfig} */
 
+const ContentSecurityPolicy = `
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https: blob:;
+  font-src 'self';
+  connect-src 'self' https://*.supabase.co https://api.stripe.com https://checkout.stripe.com wss://*.supabase.co https://graph.facebook.com;
+  frame-src 'self' https://checkout.stripe.com https://js.stripe.com;
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self' https://checkout.stripe.com;
+  object-src 'none';
+  script-src-attr 'none';
+  upgrade-insecure-requests;
+`
+
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
@@ -30,22 +46,6 @@ const securityHeaders = [
     value: ContentSecurityPolicy.replace(/\s{2,}/g, ' ').trim()
   }
 ]
-
-const ContentSecurityPolicy = `
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com;
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data: https: blob:;
-  font-src 'self';
-  connect-src 'self' https://*.supabase.co https://api.stripe.com https://checkout.stripe.com wss://*.supabase.co;
-  frame-src 'self' https://checkout.stripe.com https://js.stripe.com;
-  frame-ancestors 'none';
-  base-uri 'self';
-  form-action 'self' https://checkout.stripe.com;
-  object-src 'none';
-  script-src-attr 'none';
-  upgrade-insecure-requests;
-`
 
 const nextConfig = {
   reactStrictMode: true,
