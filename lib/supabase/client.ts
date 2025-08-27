@@ -1,33 +1,46 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-// Use placeholder values for build time if env vars are not set
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDY5MzczMjcsImV4cCI6MTk2MjUxMzMyN30.placeholder'
+// Get environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Check if we have valid URLs (not example/placeholder values)
-const isValidUrl = (url: string) => {
-  try {
-    const parsed = new URL(url)
-    return !url.includes('your_supabase_project_url') && 
-           !url.includes('placeholder') &&
-           parsed.protocol.startsWith('http')
-  } catch {
-    return false
-  }
+// Check if we have valid configuration
+const hasValidConfig = () => {
+  return (
+    supabaseUrl && 
+    supabaseAnonKey &&
+    !supabaseUrl.includes('your_supabase_project_url') &&
+    !supabaseUrl.includes('placeholder') &&
+    supabaseUrl.startsWith('http')
+  )
 }
 
-// Create client, using placeholder for build if needed
-export const supabase: SupabaseClient = createClient(
-  isValidUrl(supabaseUrl) ? supabaseUrl : 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDY5MzczMjcsImV4cCI6MTk2MjUxMzMyN30.placeholder',
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-)
+// Create a placeholder client for build time
+const createPlaceholderClient = () => {
+  console.warn('Supabase client created with placeholder values. Authentication will not work.')
+  return createClient(
+    'https://placeholder.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDY5MzczMjcsImV4cCI6MTk2MjUxMzMyN30.placeholder',
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  )
+}
+
+// Create the Supabase client
+export const supabase: SupabaseClient = hasValidConfig() 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : createPlaceholderClient()
 
 export type Database = {
   public: {

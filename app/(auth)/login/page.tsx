@@ -18,6 +18,13 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    // Check if Supabase is properly configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
+      setError('Supabase non è configurato. Controlla le variabili di ambiente.')
+      setLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
