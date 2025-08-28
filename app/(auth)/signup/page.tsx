@@ -60,6 +60,14 @@ export default function SignupPage() {
     }
 
     try {
+      // Debug logging
+      console.log('Starting signup process with data:', {
+        email: formData.email,
+        companyName: formData.companyName,
+        phoneNumber: formData.phoneNumber,
+        plan: plan
+      })
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -73,24 +81,39 @@ export default function SignupPage() {
         }
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error('Auth error:', authError)
+        throw authError
+      }
+
+      console.log('Auth user created:', authData.user?.id)
 
       if (authData.user) {
-        // Create customer record
+        // Create customer record - FIXED: Added missing email field
+        const customerData = {
+          id: authData.user.id,
+          email: formData.email, // CRITICAL FIX: This was missing!
+          company_name: formData.companyName,
+          phone_numbers: [formData.phoneNumber],
+          plan: plan as 'basic' | 'pro',
+        }
+        
+        console.log('Creating customer with data:', customerData)
+        
         const { error: customerError } = await supabase
           .from('customers')
-          .insert({
-            id: authData.user.id,
-            company_name: formData.companyName,
-            phone_numbers: [formData.phoneNumber],
-            plan: plan as 'basic' | 'pro',
-          })
+          .insert(customerData)
 
-        if (customerError) throw customerError
+        if (customerError) {
+          console.error('Customer creation error:', customerError)
+          throw customerError
+        }
 
+        console.log('Customer created successfully')
         router.push('/onboarding/setup')
       }
     } catch (error: any) {
+      console.error('Signup error:', error)
       setError(error.message || 'Errore durante la registrazione')
     } finally {
       setLoading(false)
