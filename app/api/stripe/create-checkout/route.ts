@@ -13,7 +13,7 @@ const SPECIAL_CODES = {
 export const POST = withRateLimit(async (request: NextRequest) => {
   // Initialize Stripe and Supabase inside the function to avoid build-time initialization
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    apiVersion: '2025-04-30.basil'
+    apiVersion: '2025-08-27.basil' as any // Use 'as any' to bypass version mismatch with webhook
   })
 
   const supabase = createClient(
