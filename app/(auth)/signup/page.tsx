@@ -125,33 +125,15 @@ export default function SignupPage() {
 
         console.log('Customer created successfully')
         
-        // Check if we already have a session from signup (email confirmation disabled)
+        // Check if we already have a session from signup
         if (authData.session) {
-          console.log('Session already created from signup, redirecting to onboarding')
+          // Email confirmation is disabled - we can proceed directly
+          console.log('Session created from signup, redirecting to onboarding')
           router.push('/onboarding/setup')
         } else {
-          // Try to sign in the user (in case email confirmation is disabled but session wasn't created)
-          console.log('No session from signup, attempting to sign in...')
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: formData.password,
-          })
-
-          if (signInError) {
-            console.error('Auto sign-in error:', signInError)
-            // Email confirmation is likely required
-            setError('Registrazione completata! Controlla la tua email per confermare il tuo account, poi effettua il login.')
-            // Don't redirect, let user see the message
-            return
-          }
-
-          if (signInData?.session) {
-            console.log('User signed in successfully, session created')
-            router.push('/onboarding/setup')
-          } else {
-            console.log('Account created but requires email confirmation')
-            setError('Registrazione completata! Controlla la tua email per confermare il tuo account.')
-          }
+          // Email confirmation is required - show success message
+          console.log('Email confirmation required')
+          router.push(`/signup/success?email=${encodeURIComponent(formData.email)}`)
         }
       }
     } catch (error: any) {

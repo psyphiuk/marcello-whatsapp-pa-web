@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Check if user is already logged in and redirect
   useEffect(() => {
@@ -23,6 +24,12 @@ export default function LoginPage() {
       }
     }
     checkExistingSession()
+
+    // Check if coming from email confirmation
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('confirmed') === 'true') {
+      setSuccessMessage('Email confermata con successo! Ora puoi effettuare il login.')
+    }
   }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -115,6 +122,19 @@ export default function LoginPage() {
               disabled={loading}
             />
           </div>
+
+          {successMessage && (
+            <div className={styles.success} style={{
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #0284c7',
+              color: '#0c4a6e',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              {successMessage}
+            </div>
+          )}
 
           {error && (
             <div className={styles.error}>
