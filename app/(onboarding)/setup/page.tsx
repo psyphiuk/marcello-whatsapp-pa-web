@@ -429,8 +429,52 @@ function ReviewStep({ onNext, onBack, data }: StepProps) {
 }
 
 export default function OnboardingSetup() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [setupData, setSetupData] = useState({})
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    loadCustomerData()
+  }, [])
+
+  const loadCustomerData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        console.log('No user found, redirecting to login')
+        router.push('/login')
+        return
+      }
+
+      // Load existing customer data
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (customer) {
+        console.log('Loading existing customer data:', customer)
+        setSetupData({
+          companyName: customer.company_name || '',
+          phoneNumber: customer.phone_numbers?.[0] || '',
+          additionalPhones: customer.phone_numbers?.slice(1).join(', ') || '',
+          plan: customer.plan || 'basic'
+        })
+      } else if (error?.code === 'PGRST116') {
+        // No customer record exists, redirect to complete profile
+        console.log('No customer record, redirecting to complete-profile')
+        router.push('/complete-profile')
+        return
+      }
+    } catch (error) {
+      console.error('Error loading customer data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const steps = [
     { title: 'Informazioni', component: CompanyInfoStep },
@@ -453,6 +497,18 @@ export default function OnboardingSetup() {
   }
 
   const CurrentStepComponent = steps[currentStep].component
+
+  if (loading) {
+    return (
+      <div className={styles.onboardingContainer}>
+        <div className={styles.onboardingCard}>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p>Caricamento dati...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.onboardingContainer}>

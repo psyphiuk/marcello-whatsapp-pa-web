@@ -21,6 +21,10 @@ export default function LoginPage() {
       if (session) {
         console.log('User already logged in, redirecting to dashboard')
         router.push('/dashboard')
+        // Fallback redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 500)
       }
     }
     checkExistingSession()
@@ -75,7 +79,15 @@ export default function LoginPage() {
       }
 
       console.log('Login successful, redirecting to dashboard...')
+      
+      // Try router.push first
       router.push('/dashboard')
+      
+      // Fallback: If router.push doesn't work, use window.location
+      setTimeout(() => {
+        console.log('Using fallback redirect to dashboard')
+        window.location.href = '/dashboard'
+      }, 500)
     } catch (error: any) {
       console.error('Login error caught:', error)
       setError(error.message || 'Errore durante il login')
