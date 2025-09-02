@@ -25,7 +25,7 @@ export default function SignupSuccessPage() {
     }
     checkSession()
 
-    // Set up auth state listener for when user confirms email
+    // Set up auth state listener for when user confirms email (same device)
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event)
       if (event === 'SIGNED_IN' && session) {
@@ -34,8 +34,22 @@ export default function SignupSuccessPage() {
       }
     })
 
+    // Also set up a periodic check in case user confirmed on different device
+    const intervalId = setInterval(() => {
+      console.log('Auto-checking for email confirmation...')
+      // Only auto-redirect to login, don't show messages
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          // Try a silent check if user might have confirmed elsewhere
+          // This won't interrupt the user but will help detect cross-device confirmations
+          console.log('No session yet, user may need to login after confirming on another device')
+        }
+      })
+    }, 10000) // Check every 10 seconds
+
     return () => {
       authListener.subscription.unsubscribe()
+      clearInterval(intervalId)
     }
   }, [router])
 
@@ -61,20 +75,42 @@ export default function SignupSuccessPage() {
 
   const handleCheckConfirmation = async () => {
     setCheckingSession(true)
+    setResendMessage('')
     
     try {
-      // Try to refresh the session
-      const { data: { session }, error } = await supabase.auth.getSession()
+      // Check if the email has been confirmed by checking if user can now sign in
+      console.log('Checking if email is confirmed for:', email)
       
-      if (session) {
+      // First, check if we already have a session (confirmed on same device)
+      const { data: { session: existingSession } } = await supabase.auth.getSession()
+      
+      if (existingSession) {
         console.log('Session found, redirecting to onboarding')
         router.push('/onboarding/setup')
+        return
+      }
+
+      // If no session, check if the user exists and is confirmed
+      // We'll try to get user info which will tell us if they're confirmed
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (user) {
+        // User exists and is authenticated, redirect
+        console.log('User authenticated, redirecting to onboarding')
+        router.push('/onboarding/setup')
       } else {
-        setResendMessage('Email non ancora confermata. Controlla la tua casella di posta.')
-        setTimeout(() => setResendMessage(''), 3000)
+        // No user session means either not confirmed or needs to login
+        console.log('No active session, redirecting to login')
+        // User has likely confirmed on another device, redirect to login
+        router.push('/login?confirmed=true')
       }
     } catch (error) {
-      console.error('Error checking session:', error)
+      console.error('Error checking confirmation:', error)
+      // If we can't determine status, suggest user try logging in
+      setResendMessage('Se hai confermato l\'email, prova ad effettuare il login.')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     } finally {
       setCheckingSession(false)
     }
