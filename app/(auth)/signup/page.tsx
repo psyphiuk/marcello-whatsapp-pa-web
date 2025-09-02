@@ -23,6 +23,18 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, errors: [] as string[] })
 
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('User already logged in, redirecting to dashboard')
+        router.push('/dashboard')
+      }
+    }
+    checkExistingSession()
+  }, [router])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData({

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
@@ -13,28 +13,64 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('User already logged in, redirecting to dashboard')
+        router.push('/dashboard')
+      }
+    }
+    checkExistingSession()
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Login attempt started for email:', email)
     setLoading(true)
     setError(null)
 
     // Check if Supabase is properly configured
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Has Anon Key:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')) {
+      console.error('Supabase not configured properly')
       setError('Supabase non è configurato. Controlla le variabili di ambiente.')
       setLoading(false)
       return
     }
 
     try {
+      console.log('Calling Supabase signInWithPassword...')
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      console.log('Supabase response:', { 
+        hasData: !!data, 
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        error: error?.message || null,
+        errorCode: error?.code || null
+      })
 
+      if (error) {
+        console.error('Supabase auth error:', error)
+        throw error
+      }
+
+      if (!data?.session) {
+        console.error('No session returned from Supabase')
+        throw new Error('No session created')
+      }
+
+      console.log('Login successful, redirecting to dashboard...')
       router.push('/dashboard')
     } catch (error: any) {
+      console.error('Login error caught:', error)
       setError(error.message || 'Errore durante il login')
     } finally {
       setLoading(false)
