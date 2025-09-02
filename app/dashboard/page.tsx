@@ -60,10 +60,10 @@ export default function Dashboard() {
 
       if (customerError) {
         console.error('Error loading customer data:', customerError)
-        // If customer doesn't exist, redirect to onboarding
+        // If customer doesn't exist, redirect to complete profile
         if (customerError.code === 'PGRST116') {
-          console.log('No customer record found, redirecting to onboarding')
-          router.push('/onboarding/setup')
+          console.log('No customer record found, redirecting to complete profile')
+          router.push('/complete-profile')
           return
         }
       }
@@ -72,8 +72,8 @@ export default function Dashboard() {
         console.log('Customer data loaded:', customerData)
         setCustomer(customerData)
       } else {
-        console.log('No customer data found, redirecting to onboarding')
-        router.push('/onboarding/setup')
+        console.log('No customer data found, redirecting to complete profile')
+        router.push('/complete-profile')
         return
       }
 
