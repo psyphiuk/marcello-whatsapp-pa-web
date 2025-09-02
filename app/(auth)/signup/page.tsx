@@ -122,7 +122,28 @@ export default function SignupPage() {
         }
 
         console.log('Customer created successfully')
-        router.push('/onboarding/setup')
+        
+        // Sign in the user after successful signup
+        console.log('Signing in user after signup...')
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        })
+
+        if (signInError) {
+          console.error('Auto sign-in error:', signInError)
+          // Even if auto sign-in fails, redirect to login
+          router.push('/login')
+          return
+        }
+
+        if (signInData?.session) {
+          console.log('User signed in successfully, session created')
+          router.push('/onboarding/setup')
+        } else {
+          console.log('No session created, redirecting to login')
+          router.push('/login')
+        }
       }
     } catch (error: any) {
       console.error('Signup error:', error)
