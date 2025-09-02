@@ -34,22 +34,47 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      console.log('Loading dashboard data...')
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError) {
+        console.error('Error getting user:', userError)
+        router.push('/login')
+        return
+      }
       
       if (!user) {
+        console.log('No user found, redirecting to login')
         router.push('/login')
         return
       }
 
+      console.log('User found:', user.id, user.email)
+
       // Load customer data
-      const { data: customerData } = await supabase
+      const { data: customerData, error: customerError } = await supabase
         .from('customers')
         .select('*')
         .eq('id', user.id)
         .single()
 
+      if (customerError) {
+        console.error('Error loading customer data:', customerError)
+        // If customer doesn't exist, redirect to onboarding
+        if (customerError.code === 'PGRST116') {
+          console.log('No customer record found, redirecting to onboarding')
+          router.push('/onboarding/setup')
+          return
+        }
+      }
+
       if (customerData) {
+        console.log('Customer data loaded:', customerData)
         setCustomer(customerData)
+      } else {
+        console.log('No customer data found, redirecting to onboarding')
+        router.push('/onboarding/setup')
+        return
       }
 
       // Check Google credentials
