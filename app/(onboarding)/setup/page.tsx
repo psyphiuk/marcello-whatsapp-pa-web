@@ -79,10 +79,24 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
     setError(null)
     
     try {
+      // Debug: Check if Google Client ID is set
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      console.log('[Google OAuth] Client ID present:', !!clientId)
+      console.log('[Google OAuth] Client ID starts with:', clientId?.substring(0, 20))
+      
+      if (!clientId || clientId === 'your_google_client_id') {
+        setError('Google OAuth non configurato. Contatta l\'amministratore.')
+        setConnecting(false)
+        return
+      }
+      
       // Initialize OAuth flow
       const redirectUrl = `${window.location.origin}/api/auth/google/callback`
       const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/gmail.modify')
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
+      
+      console.log('[Google OAuth] Redirect URL:', redirectUrl)
+      console.log('[Google OAuth] Opening auth window...')
       
       // Open OAuth flow in new window
       const authWindow = window.open(googleAuthUrl, 'google-auth', 'width=500,height=600')
