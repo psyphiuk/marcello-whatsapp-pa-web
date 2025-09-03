@@ -35,13 +35,26 @@ export default function SignupSuccessPage() {
     })
 
     // Also set up a periodic check in case user confirmed on different device
+    let checkCount = 0
+    const maxChecks = 30 // Stop after 5 minutes (30 * 10 seconds)
+    
     const intervalId = setInterval(() => {
-      console.log('Auto-checking for email confirmation...')
+      checkCount++
+      console.log(`Auto-checking for email confirmation... (${checkCount}/${maxChecks})`)
+      
+      if (checkCount >= maxChecks) {
+        console.log('Stopping auto-checks after 5 minutes')
+        clearInterval(intervalId)
+        return
+      }
+      
       // Only auto-redirect to login, don't show messages
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          // Try a silent check if user might have confirmed elsewhere
-          // This won't interrupt the user but will help detect cross-device confirmations
+        if (session) {
+          console.log('Session detected! Redirecting to onboarding')
+          clearInterval(intervalId)
+          router.push('/onboarding/setup')
+        } else {
           console.log('No session yet, user may need to login after confirming on another device')
         }
       })

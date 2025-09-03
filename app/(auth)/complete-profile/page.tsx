@@ -41,7 +41,10 @@ export default function CompleteProfilePage() {
     
     if (error || !user) {
       console.log('No user found, redirecting to login')
-      router.push('/login')
+      // Add a small delay to prevent rapid redirects
+      setTimeout(() => {
+        router.push('/login')
+      }, 100)
       return
     }
 

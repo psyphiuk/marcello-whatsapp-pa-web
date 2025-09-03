@@ -16,29 +16,31 @@ export default function LoginPage() {
 
   // Check if user is already logged in and redirect
   useEffect(() => {
-    const checkExistingSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        console.log('User already logged in, redirecting to dashboard')
-        router.push('/dashboard')
-        // Fallback redirect
-        setTimeout(() => {
-          window.location.href = '/dashboard'
-        }, 500)
-      }
-    }
-    checkExistingSession()
-
-    // Check URL parameters for messages
     const params = new URLSearchParams(window.location.search)
-    if (params.get('confirmed') === 'true') {
+    const hasError = params.get('error')
+    const hasConfirmed = params.get('confirmed')
+    
+    // Check URL parameters for messages
+    if (hasConfirmed === 'true') {
       setSuccessMessage('Email confermata con successo! Ora puoi effettuare il login.')
     }
-    if (params.get('error') === 'auth_callback_error') {
+    if (hasError === 'auth_callback_error') {
       setError('Errore durante la conferma dell\'email. Per favore, prova ad effettuare il login.')
     }
-    if (params.get('error') === 'callback_error') {
+    if (hasError === 'callback_error') {
       setError('Si è verificato un errore. Per favore, prova ad effettuare il login.')
+    }
+    
+    // Don't check session if we're showing an error or success message
+    if (!hasError && !hasConfirmed) {
+      const checkExistingSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          console.log('User already logged in, redirecting to dashboard')
+          router.push('/dashboard')
+        }
+      }
+      checkExistingSession()
     }
   }, [router])
 
