@@ -20,7 +20,7 @@ export default function SignupSuccessPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         console.log('User already has session, redirecting to onboarding')
-        router.push('/onboarding/setup')
+        window.location.href = '/onboarding/setup'
       }
     }
     checkSession()
@@ -30,7 +30,7 @@ export default function SignupSuccessPage() {
       console.log('Auth state changed:', event)
       if (event === 'SIGNED_IN' && session) {
         console.log('User signed in after email confirmation')
-        router.push('/onboarding/setup')
+        window.location.href = '/onboarding/setup'
       }
     })
 
@@ -53,7 +53,7 @@ export default function SignupSuccessPage() {
         if (session) {
           console.log('Session detected! Redirecting to onboarding')
           clearInterval(intervalId)
-          router.push('/onboarding/setup')
+          window.location.href = '/onboarding/setup'
         } else {
           console.log('No session yet, user may need to login after confirming on another device')
         }
@@ -99,7 +99,7 @@ export default function SignupSuccessPage() {
       
       if (existingSession) {
         console.log('Session found, redirecting to onboarding')
-        router.push('/onboarding/setup')
+        window.location.href = '/onboarding/setup'
         return
       }
 
@@ -110,19 +110,19 @@ export default function SignupSuccessPage() {
       if (user) {
         // User exists and is authenticated, redirect
         console.log('User authenticated, redirecting to onboarding')
-        router.push('/onboarding/setup')
+        window.location.href = '/onboarding/setup'
       } else {
         // No user session means either not confirmed or needs to login
         console.log('No active session, redirecting to login')
         // User has likely confirmed on another device, redirect to login
-        router.push('/login?confirmed=true')
+        window.location.href = '/login?confirmed=true'
       }
     } catch (error) {
       console.error('Error checking confirmation:', error)
       // If we can't determine status, suggest user try logging in
       setResendMessage('Se hai confermato l\'email, prova ad effettuare il login.')
       setTimeout(() => {
-        router.push('/login')
+        window.location.href = '/login'
       }, 2000)
     } finally {
       setCheckingSession(false)

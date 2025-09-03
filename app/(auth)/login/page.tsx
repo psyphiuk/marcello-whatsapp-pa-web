@@ -36,8 +36,22 @@ export default function LoginPage() {
       const checkExistingSession = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
-          console.log('User already logged in, redirecting to dashboard')
-          router.push('/dashboard')
+          console.log('User already logged in, checking where to redirect...')
+          
+          // Check onboarding status
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (!customer || !customer.onboarding_completed) {
+            console.log('Redirecting logged in user to onboarding...')
+            window.location.href = '/onboarding/setup'
+          } else {
+            console.log('Redirecting logged in user to dashboard...')
+            window.location.href = '/dashboard'
+          }
         }
       }
       checkExistingSession()
@@ -97,10 +111,12 @@ export default function LoginPage() {
       
       if (!customer || !customer.onboarding_completed) {
         console.log('User needs onboarding, redirecting to setup...')
-        router.push('/onboarding/setup')
+        // Use window.location for reliable redirect after auth change
+        window.location.href = '/onboarding/setup'
       } else {
         console.log('Onboarding completed, redirecting to dashboard...')
-        router.push('/dashboard')
+        // Use window.location for reliable redirect after auth change
+        window.location.href = '/dashboard'
       }
     } catch (error: any) {
       console.error('Login error caught:', error)

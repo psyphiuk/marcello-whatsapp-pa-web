@@ -39,13 +39,13 @@ export default function Dashboard() {
       
       if (userError) {
         console.error('Error getting user:', userError)
-        router.push('/login')
+        window.location.href = '/login'
         return
       }
       
       if (!user) {
         console.log('No user found, redirecting to login')
-        router.push('/login')
+        window.location.href = '/login'
         return
       }
 
@@ -63,7 +63,7 @@ export default function Dashboard() {
         // If customer doesn't exist, redirect to complete profile
         if (customerError.code === 'PGRST116') {
           console.log('No customer record found, redirecting to complete profile')
-          router.push('/complete-profile')
+          window.location.href = '/complete-profile'
           return
         }
       }
@@ -75,12 +75,12 @@ export default function Dashboard() {
         // Check if onboarding is completed
         if (!customerData.onboarding_completed) {
           console.log('Onboarding not completed, redirecting to setup')
-          router.push('/onboarding/setup')
+          window.location.href = '/onboarding/setup'
           return
         }
       } else {
         console.log('No customer data found, redirecting to complete profile')
-        router.push('/complete-profile')
+        window.location.href = '/complete-profile'
         return
       }
 

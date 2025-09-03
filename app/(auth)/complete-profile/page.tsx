@@ -43,7 +43,7 @@ export default function CompleteProfilePage() {
       console.log('No user found, redirecting to login')
       // Add a small delay to prevent rapid redirects
       setTimeout(() => {
-        router.push('/login')
+        window.location.href = '/login'
       }, 100)
       return
     }
@@ -60,7 +60,7 @@ export default function CompleteProfilePage() {
 
     if (customer) {
       console.log('Customer already exists, redirecting to dashboard')
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }
   }
 
@@ -107,7 +107,7 @@ export default function CompleteProfilePage() {
       console.log('Customer record created successfully')
       // Clear pending signup data
       localStorage.removeItem('pendingSignup')
-      router.push('/onboarding/setup')
+      window.location.href = '/onboarding/setup'
     } catch (error: any) {
       console.error('Error creating customer:', error)
       setError(error.message || 'Errore durante la creazione del profilo')

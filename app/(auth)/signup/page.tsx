@@ -29,7 +29,7 @@ export default function SignupPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         console.log('User already logged in, redirecting to dashboard')
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     }
     checkExistingSession()
@@ -142,11 +142,11 @@ export default function SignupPage() {
         if (authData.session) {
           // Email confirmation is disabled - we can proceed directly
           console.log('Session created from signup, redirecting to onboarding')
-          router.push('/onboarding/setup')
+          window.location.href = '/onboarding/setup'
         } else {
           // Email confirmation is required - show success message
           console.log('Email confirmation required')
-          router.push(`/signup/success?email=${encodeURIComponent(formData.email)}`)
+          window.location.href = `/signup/success?email=${encodeURIComponent(formData.email)}`
         }
       }
     } catch (error: any) {
