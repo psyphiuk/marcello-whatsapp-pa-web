@@ -71,6 +71,13 @@ export default function Dashboard() {
       if (customerData) {
         console.log('Customer data loaded:', customerData)
         setCustomer(customerData)
+        
+        // Check if onboarding is completed
+        if (!customerData.onboarding_completed) {
+          console.log('Onboarding not completed, redirecting to setup')
+          router.push('/onboarding/setup')
+          return
+        }
       } else {
         console.log('No customer data found, redirecting to complete profile')
         router.push('/complete-profile')

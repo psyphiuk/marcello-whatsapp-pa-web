@@ -32,10 +32,14 @@ export async function GET(request: NextRequest) {
           .eq('id', data.session.user.id)
           .single()
         
-        // Redirect based on whether customer record exists
+        // Redirect based on whether customer record exists and onboarding status
         if (customer) {
-          // Customer exists, go to dashboard
-          return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+          // Customer exists, check onboarding status
+          if (!customer.onboarding_completed) {
+            return NextResponse.redirect(new URL('/onboarding/setup', requestUrl.origin))
+          } else {
+            return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+          }
         } else {
           // No customer record, need to complete profile
           return NextResponse.redirect(new URL('/complete-profile', requestUrl.origin))

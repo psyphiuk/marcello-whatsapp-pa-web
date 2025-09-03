@@ -86,16 +86,22 @@ export default function LoginPage() {
         throw new Error('No session created')
       }
 
-      console.log('Login successful, redirecting to dashboard...')
+      console.log('Login successful, checking onboarding status...')
       
-      // Try router.push first
-      router.push('/dashboard')
+      // Check if user has completed onboarding
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('onboarding_completed')
+        .eq('id', data.user.id)
+        .single()
       
-      // Fallback: If router.push doesn't work, use window.location
-      setTimeout(() => {
-        console.log('Using fallback redirect to dashboard')
-        window.location.href = '/dashboard'
-      }, 500)
+      if (!customer || !customer.onboarding_completed) {
+        console.log('User needs onboarding, redirecting to setup...')
+        router.push('/onboarding/setup')
+      } else {
+        console.log('Onboarding completed, redirecting to dashboard...')
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       console.error('Login error caught:', error)
       setError(error.message || 'Errore durante il login')
