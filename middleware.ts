@@ -34,19 +34,14 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Protect authenticated routes
+  // Protect authenticated routes (removed /onboarding to allow access after email confirmation)
   if (req.nextUrl.pathname.startsWith('/dashboard') || 
-      req.nextUrl.pathname.startsWith('/onboarding') ||
       req.nextUrl.pathname.startsWith('/settings')) {
     if (!session) {
       console.log('[Middleware] No session for protected route:', req.nextUrl.pathname)
       // Don't redirect if we're already on the login page (prevents loops)
       if (!req.nextUrl.pathname.includes('/login')) {
-        // Add parameter to indicate where the redirect came from
         const loginUrl = new URL('/login', req.url)
-        if (req.nextUrl.pathname.startsWith('/onboarding')) {
-          loginUrl.searchParams.set('from', 'onboarding')
-        }
         return NextResponse.redirect(loginUrl)
       }
     }
@@ -57,5 +52,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/onboarding/:path*', '/settings/:path*']
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/settings/:path*']
 }

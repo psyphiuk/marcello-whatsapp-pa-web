@@ -20,13 +20,8 @@ export default function LoginPage() {
     const hasError = params.get('error')
     const hasConfirmed = params.get('confirmed')
     
-    // Loop detection
-    const fromOnboarding = params.get('from') === 'onboarding'
-    if (fromOnboarding) {
-      console.log('[Login] Redirected from onboarding - likely no session, stopping auto-redirect')
-      setError('Sessione scaduta. Per favore, effettua il login.')
-      return // Don't auto-redirect to prevent loop
-    }
+    // No longer needed since onboarding is not protected
+    // Loop detection was for when onboarding was protected by middleware
     
     // Check URL parameters for messages
     if (hasConfirmed === 'true') {
@@ -40,7 +35,7 @@ export default function LoginPage() {
     }
     
     // Don't check session if we're showing an error or success message
-    if (!hasError && !hasConfirmed && !fromOnboarding) {
+    if (!hasError && !hasConfirmed) {
       const checkExistingSession = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {

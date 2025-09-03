@@ -26,23 +26,36 @@ export async function GET(request: NextRequest) {
         console.log('Session created successfully for user:', data.session.user.email)
         
         // Check if user needs to complete onboarding
-        const { data: customer } = await supabase
+        const { data: customer, error: customerError } = await supabase
           .from('customers')
           .select('*')
           .eq('id', data.session.user.id)
           .single()
         
+        // If error is not "no rows", log it
+        if (customerError && customerError.code !== 'PGRST116') {
+          console.error('Error fetching customer:', customerError)
+        }
+        
         // Redirect based on whether customer record exists and onboarding status
         if (customer) {
+          console.log('Customer record found:', customer.email)
           // Customer exists, check onboarding status
           if (!customer.onboarding_completed) {
-            return NextResponse.redirect(new URL('/onboarding/setup', requestUrl.origin))
+            console.log('Onboarding not completed, redirecting to setup')
+            // Create response with proper headers for redirect
+            const response = NextResponse.redirect(new URL('/onboarding/setup', requestUrl.origin))
+            return response
           } else {
-            return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+            console.log('Onboarding completed, redirecting to dashboard')
+            const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+            return response
           }
         } else {
+          console.log('No customer record found, redirecting to complete-profile')
           // No customer record, need to complete profile
-          return NextResponse.redirect(new URL('/complete-profile', requestUrl.origin))
+          const response = NextResponse.redirect(new URL('/complete-profile', requestUrl.origin))
+          return response
         }
       }
     } catch (error) {
