@@ -19,6 +19,21 @@ export default function CompleteProfilePage() {
 
   useEffect(() => {
     checkUser()
+    // Try to restore signup data from localStorage
+    const pendingSignup = localStorage.getItem('pendingSignup')
+    if (pendingSignup) {
+      try {
+        const data = JSON.parse(pendingSignup)
+        setFormData({
+          companyName: data.companyName || '',
+          phoneNumber: data.phoneNumber || '',
+          plan: data.plan || 'basic'
+        })
+        console.log('Restored signup data from localStorage')
+      } catch (e) {
+        console.error('Error parsing pending signup data:', e)
+      }
+    }
   }, [])
 
   const checkUser = async () => {
@@ -87,6 +102,8 @@ export default function CompleteProfilePage() {
       }
 
       console.log('Customer record created successfully')
+      // Clear pending signup data
+      localStorage.removeItem('pendingSignup')
       router.push('/onboarding/setup')
     } catch (error: any) {
       console.error('Error creating customer:', error)

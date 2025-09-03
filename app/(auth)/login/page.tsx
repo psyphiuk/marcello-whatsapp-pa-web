@@ -29,10 +29,16 @@ export default function LoginPage() {
     }
     checkExistingSession()
 
-    // Check if coming from email confirmation
+    // Check URL parameters for messages
     const params = new URLSearchParams(window.location.search)
     if (params.get('confirmed') === 'true') {
       setSuccessMessage('Email confermata con successo! Ora puoi effettuare il login.')
+    }
+    if (params.get('error') === 'auth_callback_error') {
+      setError('Errore durante la conferma dell\'email. Per favore, prova ad effettuare il login.')
+    }
+    if (params.get('error') === 'callback_error') {
+      setError('Si è verificato un errore. Per favore, prova ad effettuare il login.')
     }
   }, [router])
 

@@ -85,6 +85,7 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             company_name: formData.companyName,
             phone_number: formData.phoneNumber,
@@ -103,27 +104,39 @@ export default function SignupPage() {
       console.log('User email confirmed:', authData.user?.email_confirmed_at)
 
       if (authData.user) {
-        // Create customer record - FIXED: Added missing email field
-        const customerData = {
-          id: authData.user.id,
-          email: formData.email, // CRITICAL FIX: This was missing!
-          company_name: formData.companyName,
-          phone_numbers: [formData.phoneNumber],
-          plan: plan as 'basic' | 'pro',
-        }
-        
-        console.log('Creating customer with data:', customerData)
-        
-        const { error: customerError } = await supabase
-          .from('customers')
-          .insert(customerData)
+        // Only create customer record if we have a session (email confirmation disabled)
+        if (authData.session) {
+          const customerData = {
+            id: authData.user.id,
+            email: formData.email,
+            company_name: formData.companyName,
+            phone_numbers: [formData.phoneNumber],
+            plan: plan as 'basic' | 'pro',
+          }
+          
+          console.log('Creating customer with data:', customerData)
+          
+          const { error: customerError } = await supabase
+            .from('customers')
+            .insert(customerData)
 
-        if (customerError) {
-          console.error('Customer creation error:', customerError)
-          throw customerError
-        }
+          if (customerError) {
+            console.error('Customer creation error:', customerError)
+            throw customerError
+          }
 
-        console.log('Customer created successfully')
+          console.log('Customer created successfully')
+        } else {
+          // Store signup data in localStorage for later use after email confirmation
+          localStorage.setItem('pendingSignup', JSON.stringify({
+            userId: authData.user.id,
+            email: formData.email,
+            companyName: formData.companyName,
+            phoneNumber: formData.phoneNumber,
+            plan: plan
+          }))
+          console.log('Stored signup data for post-confirmation')
+        }
         
         // Check if we already have a session from signup
         if (authData.session) {
@@ -289,7 +302,8 @@ export default function SignupPage() {
           <div className={styles.terms}>
             <label>
               <input type="checkbox" required disabled={loading} />
-              Accetto i <Link href="/terms">Termini di Servizio</Link> e la{' '}
+              Accetto i <Link href="/terms">Termini di Servizio</Link>
+              {' '}e la{' '}
               <Link href="/privacy">Privacy Policy</Link>
             </label>
           </div>
