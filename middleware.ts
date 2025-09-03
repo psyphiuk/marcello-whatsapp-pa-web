@@ -39,9 +39,15 @@ export async function middleware(req: NextRequest) {
       req.nextUrl.pathname.startsWith('/onboarding') ||
       req.nextUrl.pathname.startsWith('/settings')) {
     if (!session) {
+      console.log('[Middleware] No session for protected route:', req.nextUrl.pathname)
       // Don't redirect if we're already on the login page (prevents loops)
       if (!req.nextUrl.pathname.includes('/login')) {
-        return NextResponse.redirect(new URL('/login', req.url))
+        // Add parameter to indicate where the redirect came from
+        const loginUrl = new URL('/login', req.url)
+        if (req.nextUrl.pathname.startsWith('/onboarding')) {
+          loginUrl.searchParams.set('from', 'onboarding')
+        }
+        return NextResponse.redirect(loginUrl)
       }
     }
   }

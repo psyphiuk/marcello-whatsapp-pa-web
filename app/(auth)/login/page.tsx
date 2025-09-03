@@ -20,6 +20,14 @@ export default function LoginPage() {
     const hasError = params.get('error')
     const hasConfirmed = params.get('confirmed')
     
+    // Loop detection
+    const fromOnboarding = params.get('from') === 'onboarding'
+    if (fromOnboarding) {
+      console.log('[Login] Redirected from onboarding - likely no session, stopping auto-redirect')
+      setError('Sessione scaduta. Per favore, effettua il login.')
+      return // Don't auto-redirect to prevent loop
+    }
+    
     // Check URL parameters for messages
     if (hasConfirmed === 'true') {
       setSuccessMessage('Email confermata con successo! Ora puoi effettuare il login.')
@@ -32,11 +40,11 @@ export default function LoginPage() {
     }
     
     // Don't check session if we're showing an error or success message
-    if (!hasError && !hasConfirmed) {
+    if (!hasError && !hasConfirmed && !fromOnboarding) {
       const checkExistingSession = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
-          console.log('User already logged in, checking where to redirect...')
+          console.log('[Login] User already logged in, checking where to redirect...')
           
           // Check onboarding status
           const { data: customer } = await supabase
@@ -46,10 +54,10 @@ export default function LoginPage() {
             .single()
           
           if (!customer || !customer.onboarding_completed) {
-            console.log('Redirecting logged in user to onboarding...')
+            console.log('[Login] Redirecting logged in user to onboarding...')
             window.location.href = '/onboarding/setup'
           } else {
-            console.log('Redirecting logged in user to dashboard...')
+            console.log('[Login] Redirecting logged in user to dashboard...')
             window.location.href = '/dashboard'
           }
         }
@@ -100,7 +108,17 @@ export default function LoginPage() {
         throw new Error('No session created')
       }
 
-      console.log('Login successful, checking onboarding status...')
+      console.log('[Login] Login successful, verifying session...')
+      
+      // Verify the session is really established
+      const { data: { session: verifiedSession } } = await supabase.auth.getSession()
+      
+      if (!verifiedSession) {
+        console.error('[Login] Session not established after login!')
+        throw new Error('Sessione non creata correttamente')
+      }
+      
+      console.log('[Login] Session verified, checking onboarding status...')
       
       // Check if user has completed onboarding
       const { data: customer } = await supabase
@@ -110,17 +128,17 @@ export default function LoginPage() {
         .single()
       
       if (!customer || !customer.onboarding_completed) {
-        console.log('User needs onboarding, redirecting to setup...')
-        // Add small delay to ensure session cookies are set
+        console.log('[Login] User needs onboarding, redirecting to setup...')
+        // Add delay to ensure session cookies are properly set
         setTimeout(() => {
           window.location.href = '/onboarding/setup'
-        }, 500)
+        }, 1000) // Increased to 1 second
       } else {
-        console.log('Onboarding completed, redirecting to dashboard...')
-        // Add small delay to ensure session cookies are set
+        console.log('[Login] Onboarding completed, redirecting to dashboard...')
+        // Add delay to ensure session cookies are properly set
         setTimeout(() => {
           window.location.href = '/dashboard'
-        }, 500)
+        }, 1000) // Increased to 1 second
       }
     } catch (error: any) {
       console.error('Login error caught:', error)
