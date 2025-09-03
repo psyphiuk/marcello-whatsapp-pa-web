@@ -181,8 +181,8 @@ export default function CompleteProfilePage() {
               onChange={handleChange}
               disabled={loading}
             >
-              <option value="basic">Basic - €49/mese</option>
-              <option value="pro">Professional - €99/mese</option>
+              <option value="basic">Basic - €100/mese</option>
+              <option value="pro">Professional - €200/mese</option>
             </select>
           </div>
 
