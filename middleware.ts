@@ -3,12 +3,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  console.log('[Middleware] Checking path:', req.nextUrl.pathname)
+  
+  // Create a response and pass it to the middleware client
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // Get and refresh the session
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  console.log('[Middleware] Session exists:', !!session, session?.user?.email)
 
   // Protect admin routes
   if (req.nextUrl.pathname.startsWith('/admin')) {
@@ -35,10 +39,14 @@ export async function middleware(req: NextRequest) {
       req.nextUrl.pathname.startsWith('/onboarding') ||
       req.nextUrl.pathname.startsWith('/settings')) {
     if (!session) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      // Don't redirect if we're already on the login page (prevents loops)
+      if (!req.nextUrl.pathname.includes('/login')) {
+        return NextResponse.redirect(new URL('/login', req.url))
+      }
     }
   }
 
+  // IMPORTANT: Return the response with updated cookies
   return res
 }
 

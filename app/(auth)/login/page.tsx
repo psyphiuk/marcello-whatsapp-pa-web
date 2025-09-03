@@ -111,12 +111,16 @@ export default function LoginPage() {
       
       if (!customer || !customer.onboarding_completed) {
         console.log('User needs onboarding, redirecting to setup...')
-        // Use window.location for reliable redirect after auth change
-        window.location.href = '/onboarding/setup'
+        // Add small delay to ensure session cookies are set
+        setTimeout(() => {
+          window.location.href = '/onboarding/setup'
+        }, 500)
       } else {
         console.log('Onboarding completed, redirecting to dashboard...')
-        // Use window.location for reliable redirect after auth change
-        window.location.href = '/dashboard'
+        // Add small delay to ensure session cookies are set
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 500)
       }
     } catch (error: any) {
       console.error('Login error caught:', error)
