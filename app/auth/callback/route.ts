@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
           // Customer exists, check onboarding status
           if (!customer.onboarding_completed) {
             console.log('Onboarding not completed, redirecting to setup')
-            // Create response with proper headers for redirect
             const response = NextResponse.redirect(new URL('/setup', requestUrl.origin))
             return response
           } else {
@@ -52,9 +51,9 @@ export async function GET(request: NextRequest) {
             return response
           }
         } else {
-          console.log('No customer record found, redirecting to complete-profile')
-          // No customer record, need to complete profile
-          const response = NextResponse.redirect(new URL('/complete-profile', requestUrl.origin))
+          console.log('No customer record found, redirecting to setup to create it')
+          // No customer record, go to setup which will handle creation
+          const response = NextResponse.redirect(new URL('/setup', requestUrl.origin))
           return response
         }
       }

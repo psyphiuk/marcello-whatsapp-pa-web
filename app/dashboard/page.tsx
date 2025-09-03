@@ -63,7 +63,7 @@ export default function Dashboard() {
         // If customer doesn't exist, redirect to complete profile
         if (customerError.code === 'PGRST116') {
           console.log('No customer record found, redirecting to complete profile')
-          window.location.href = '/complete-profile'
+          window.location.href = '/setup'
           return
         }
       }
@@ -80,7 +80,7 @@ export default function Dashboard() {
         }
       } else {
         console.log('No customer data found, redirecting to complete profile')
-        window.location.href = '/complete-profile'
+        window.location.href = '/setup'
         return
       }
 

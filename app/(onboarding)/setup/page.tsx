@@ -464,10 +464,23 @@ export default function OnboardingSetup() {
           plan: customer.plan || 'basic'
         })
       } else if (error?.code === 'PGRST116') {
-        // No customer record exists, redirect to complete profile
-        console.log('No customer record, redirecting to complete-profile')
-        router.push('/complete-profile')
-        return
+        // No customer record exists, that's ok - we'll create it when they complete step 1
+        console.log('No customer record yet, will create during onboarding')
+        // Try to load from localStorage if available (from signup)
+        const pendingSignup = localStorage.getItem('pendingSignup')
+        if (pendingSignup) {
+          try {
+            const data = JSON.parse(pendingSignup)
+            setSetupData({
+              companyName: data.companyName || '',
+              phoneNumber: data.phoneNumber || '',
+              plan: data.plan || 'basic'
+            })
+            console.log('Restored signup data from localStorage')
+          } catch (e) {
+            console.error('Error parsing pending signup data:', e)
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading customer data:', error)
@@ -483,8 +496,48 @@ export default function OnboardingSetup() {
     { title: 'Riepilogo', component: ReviewStep },
   ]
 
-  const handleNext = (stepData: any) => {
-    setSetupData({ ...setupData, ...stepData })
+  const handleNext = async (stepData: any) => {
+    const updatedData = { ...setupData, ...stepData }
+    setSetupData(updatedData)
+    
+    // After first step (CompanyInfoStep), create customer record if it doesn't exist
+    if (currentStep === 0) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          // Check if customer exists
+          const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('id', user.id)
+            .single()
+          
+          if (!existingCustomer) {
+            console.log('Creating customer record...')
+            const { error } = await supabase
+              .from('customers')
+              .insert({
+                id: user.id,
+                email: user.email,
+                company_name: updatedData.companyName,
+                phone_numbers: [updatedData.phoneNumber, ...(updatedData.additionalPhones ? updatedData.additionalPhones.split(',').map((p: string) => p.trim()).filter(Boolean) : [])],
+                plan: updatedData.plan || 'basic'
+              })
+            
+            if (error) {
+              console.error('Error creating customer:', error)
+            } else {
+              console.log('Customer record created')
+              // Clear localStorage after successful creation
+              localStorage.removeItem('pendingSignup')
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in handleNext:', error)
+      }
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
     }
