@@ -20,7 +20,7 @@ export default function SignupSuccessPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         console.log('User already has session, redirecting to onboarding')
-        window.location.href = '/onboarding/setup'
+        window.location.href = '/setup'
       }
     }
     checkSession()
@@ -30,7 +30,7 @@ export default function SignupSuccessPage() {
       console.log('Auth state changed:', event)
       if (event === 'SIGNED_IN' && session) {
         console.log('User signed in after email confirmation')
-        window.location.href = '/onboarding/setup'
+        window.location.href = '/setup'
       }
     })
 
@@ -53,7 +53,7 @@ export default function SignupSuccessPage() {
         if (session) {
           console.log('Session detected! Redirecting to onboarding')
           clearInterval(intervalId)
-          window.location.href = '/onboarding/setup'
+          window.location.href = '/setup'
         } else {
           console.log('No session yet, user may need to login after confirming on another device')
         }
@@ -99,7 +99,7 @@ export default function SignupSuccessPage() {
       
       if (existingSession) {
         console.log('Session found, redirecting to onboarding')
-        window.location.href = '/onboarding/setup'
+        window.location.href = '/setup'
         return
       }
 
@@ -110,7 +110,7 @@ export default function SignupSuccessPage() {
       if (user) {
         // User exists and is authenticated, redirect
         console.log('User authenticated, redirecting to onboarding')
-        window.location.href = '/onboarding/setup'
+        window.location.href = '/setup'
       } else {
         // No user session means either not confirmed or needs to login
         console.log('No active session, redirecting to login')

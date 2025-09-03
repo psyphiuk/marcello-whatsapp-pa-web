@@ -107,7 +107,7 @@ export default function CompleteProfilePage() {
       console.log('Customer record created successfully')
       // Clear pending signup data
       localStorage.removeItem('pendingSignup')
-      window.location.href = '/onboarding/setup'
+      window.location.href = '/setup'
     } catch (error: any) {
       console.error('Error creating customer:', error)
       setError(error.message || 'Errore durante la creazione del profilo')

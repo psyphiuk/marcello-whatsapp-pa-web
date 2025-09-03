@@ -75,7 +75,7 @@ export default function Dashboard() {
         // Check if onboarding is completed
         if (!customerData.onboarding_completed) {
           console.log('Onboarding not completed, redirecting to setup')
-          window.location.href = '/onboarding/setup'
+          window.location.href = '/setup'
           return
         }
       } else {

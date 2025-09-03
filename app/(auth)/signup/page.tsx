@@ -142,7 +142,7 @@ export default function SignupPage() {
         if (authData.session) {
           // Email confirmation is disabled - we can proceed directly
           console.log('Session created from signup, redirecting to onboarding')
-          window.location.href = '/onboarding/setup'
+          window.location.href = '/setup'
         } else {
           // Email confirmation is required - show success message
           console.log('Email confirmation required')

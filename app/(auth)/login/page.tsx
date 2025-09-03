@@ -50,7 +50,7 @@ export default function LoginPage() {
           
           if (!customer || !customer.onboarding_completed) {
             console.log('[Login] Redirecting logged in user to onboarding...')
-            window.location.href = '/onboarding/setup'
+            window.location.href = '/setup'
           } else {
             console.log('[Login] Redirecting logged in user to dashboard...')
             window.location.href = '/dashboard'
@@ -126,7 +126,7 @@ export default function LoginPage() {
         console.log('[Login] User needs onboarding, redirecting to setup...')
         // Add delay to ensure session cookies are properly set
         setTimeout(() => {
-          window.location.href = '/onboarding/setup'
+          window.location.href = '/setup'
         }, 1000) // Increased to 1 second
       } else {
         console.log('[Login] Onboarding completed, redirecting to dashboard...')

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           if (!customer.onboarding_completed) {
             console.log('Onboarding not completed, redirecting to setup')
             // Create response with proper headers for redirect
-            const response = NextResponse.redirect(new URL('/onboarding/setup', requestUrl.origin))
+            const response = NextResponse.redirect(new URL('/setup', requestUrl.origin))
             return response
           } else {
             console.log('Onboarding completed, redirecting to dashboard')

@@ -172,7 +172,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       line_items: lineItems,
       mode: 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding/setup`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/setup`,
       customer_email: email,
       metadata: {
         customer_id: customerId,
