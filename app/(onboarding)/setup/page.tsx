@@ -109,7 +109,10 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
       // Listen for postMessage from OAuth callback
       const handleMessage = (event: MessageEvent) => {
         console.log('[Google OAuth] Message received:', event.data, 'from:', event.origin)
-        if (event.origin === window.location.origin && event.data?.type === 'google-oauth-success') {
+        
+        if (event.origin !== window.location.origin) return
+        
+        if (event.data?.type === 'google-oauth-success') {
           console.log('[Google OAuth] Success message confirmed!')
           window.removeEventListener('message', handleMessage)
           if (authWindow && !authWindow.closed) {
@@ -121,6 +124,25 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
             console.log('[Google OAuth] Checking credentials after success message')
             checkCredentials()
           }, 500)
+        } else if (event.data?.type === 'google-oauth-error') {
+          console.error('[Google OAuth] Error received:', event.data.error)
+          window.removeEventListener('message', handleMessage)
+          if (authWindow && !authWindow.closed) {
+            authWindow.close()
+          }
+          clearInterval(checkAuth)
+          setConnecting(false)
+          
+          // Set appropriate error message
+          const errorMessages: Record<string, string> = {
+            'not_authenticated': 'Sessione scaduta. Ricarica la pagina e riprova.',
+            'denied': 'Autorizzazione negata. Riprova.',
+            'no_code': 'Nessun codice di autorizzazione ricevuto.',
+            'token_exchange': 'Errore durante lo scambio del token.',
+            'storage': 'Errore nel salvataggio delle credenziali.',
+            'unexpected': 'Errore inaspettato. Riprova.'
+          }
+          setError(errorMessages[event.data.error] || 'Errore durante la connessione.')
         }
       }
       

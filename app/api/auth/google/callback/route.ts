@@ -14,12 +14,42 @@ export async function GET(request: NextRequest) {
   // Check for OAuth errors
   if (error) {
     console.error('[Google OAuth Callback] OAuth error:', error)
-    return NextResponse.redirect(new URL('/setup?google_error=denied', requestUrl.origin))
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>OAuth Error</title></head>
+        <body>
+          <p>Errore durante l'autorizzazione: ${error}</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-error', error: '${error}' }, '${requestUrl.origin}');
+            }
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
   }
   
   if (!code) {
     console.error('[Google OAuth Callback] No authorization code received')
-    return NextResponse.redirect(new URL('/setup?google_error=no_code', requestUrl.origin))
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>OAuth Error</title></head>
+        <body>
+          <p>Nessun codice di autorizzazione ricevuto</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-error', error: 'no_code' }, '${requestUrl.origin}');
+            }
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
   }
   
   const cookieStore = cookies()
@@ -31,7 +61,22 @@ export async function GET(request: NextRequest) {
     
     if (!user) {
       console.error('[Google OAuth Callback] No authenticated user')
-      return NextResponse.redirect(new URL('/login', requestUrl.origin))
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><title>Authentication Required</title></head>
+          <body>
+            <p>Sessione non autenticata. Per favore accedi prima.</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'google-oauth-error', error: 'not_authenticated' }, '${requestUrl.origin}');
+              }
+              setTimeout(() => window.close(), 2000);
+            </script>
+          </body>
+        </html>
+      `
+      return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
     }
     
     console.log('[Google OAuth Callback] Processing for user:', user.email)
@@ -55,7 +100,22 @@ export async function GET(request: NextRequest) {
     
     if (tokens.error) {
       console.error('[Google OAuth Callback] Token exchange error:', tokens.error)
-      return NextResponse.redirect(new URL('/setup?google_error=token_exchange', requestUrl.origin))
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><title>Token Error</title></head>
+          <body>
+            <p>Errore nello scambio del token: ${tokens.error}</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'google-oauth-error', error: 'token_exchange' }, '${requestUrl.origin}');
+              }
+              setTimeout(() => window.close(), 2000);
+            </script>
+          </body>
+        </html>
+      `
+      return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
     }
     
     console.log('[Google OAuth Callback] Tokens received, storing credentials')
@@ -74,7 +134,22 @@ export async function GET(request: NextRequest) {
     
     if (dbError) {
       console.error('[Google OAuth Callback] Database error:', dbError)
-      return NextResponse.redirect(new URL('/setup?google_error=storage', requestUrl.origin))
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><title>Storage Error</title></head>
+          <body>
+            <p>Errore nel salvataggio delle credenziali</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'google-oauth-error', error: 'storage' }, '${requestUrl.origin}');
+              }
+              setTimeout(() => window.close(), 2000);
+            </script>
+          </body>
+        </html>
+      `
+      return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
     }
     
     console.log('[Google OAuth Callback] Credentials stored successfully')
@@ -164,6 +239,21 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('[Google OAuth Callback] Unexpected error:', error)
-    return NextResponse.redirect(new URL('/setup?google_error=unexpected', requestUrl.origin))
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>Unexpected Error</title></head>
+        <body>
+          <p>Errore inaspettato durante l'autorizzazione</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-error', error: 'unexpected' }, '${requestUrl.origin}');
+            }
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
   }
 }
