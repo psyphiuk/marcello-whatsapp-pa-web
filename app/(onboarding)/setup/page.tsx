@@ -116,19 +116,59 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
           }
           clearInterval(checkAuth)
           // Check if credentials were stored
-          checkCredentials()
+          setTimeout(() => checkCredentials(), 500)
         }
       }
       
       window.addEventListener('message', handleMessage)
       
-      // Also check if window is closed manually
-      const checkAuth = setInterval(() => {
+      // Poll for window closure and credential storage
+      let pollCount = 0
+      const checkAuth = setInterval(async () => {
+        pollCount++
+        
+        // Check if window is closed
         if (authWindow?.closed) {
+          console.log('[Google OAuth] Popup window closed')
           clearInterval(checkAuth)
           window.removeEventListener('message', handleMessage)
-          // Check if credentials were stored
-          checkCredentials()
+          // Give it a moment for the credentials to be stored
+          setTimeout(() => checkCredentials(), 1000)
+          return
+        }
+        
+        // After 5 seconds, start checking for credentials even if window is open
+        // This handles cases where the popup can't close due to browser restrictions
+        if (pollCount > 5) {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase
+              .from('credentials')
+              .select('*')
+              .eq('customer_id', user.id)
+              .eq('service', 'google')
+              .single()
+            
+            if (data) {
+              console.log('[Google OAuth] Credentials detected via polling')
+              clearInterval(checkAuth)
+              window.removeEventListener('message', handleMessage)
+              setConnected(true)
+              setConnecting(false)
+              setError(null)
+              if (authWindow && !authWindow.closed) {
+                authWindow.close()
+              }
+            }
+          }
+        }
+        
+        // Timeout after 60 seconds
+        if (pollCount > 60) {
+          clearInterval(checkAuth)
+          window.removeEventListener('message', handleMessage)
+          setError('Timeout durante la connessione. Riprova.')
+          setConnecting(false)
         }
       }, 1000)
     } catch (error: any) {
@@ -155,15 +195,18 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
           console.log('[Google OAuth] Credentials found, marking as connected')
           setConnected(true)
           setConnecting(false)
-        } else {
+          setError(null)
+        } else if (!connecting) {
+          // Only show error if we're not in the middle of connecting
           console.log('[Google OAuth] No credentials found')
-          setError('Credenziali non trovate. Riprova.')
-          setConnecting(false)
         }
       }
     } catch (error) {
-      setError('Errore nel verificare le credenziali')
-      setConnecting(false)
+      console.error('[Google OAuth] Error checking credentials:', error)
+      if (!connecting) {
+        setError('Errore nel verificare le credenziali')
+        setConnecting(false)
+      }
     }
   }
 

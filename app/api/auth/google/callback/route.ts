@@ -85,20 +85,52 @@ export async function GET(request: NextRequest) {
       <html>
         <head>
           <title>Connessione completata</title>
+          <style>
+            body {
+              font-family: system-ui, -apple-system, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+            }
+            .container {
+              text-align: center;
+              padding: 2rem;
+            }
+            .success-icon {
+              font-size: 4rem;
+              margin-bottom: 1rem;
+            }
+          </style>
         </head>
         <body>
-          <p>Connessione con Google completata! Questa finestra si chiuderà automaticamente.</p>
+          <div class="container">
+            <div class="success-icon">✓</div>
+            <h2>Connessione completata!</h2>
+            <p>Puoi chiudere questa finestra.</p>
+          </div>
           <script>
-            // Try to notify parent window first
-            if (window.opener) {
-              window.opener.postMessage({ type: 'google-oauth-success' }, '${requestUrl.origin}');
+            // Notify parent window
+            if (window.opener && !window.opener.closed) {
+              try {
+                window.opener.postMessage({ type: 'google-oauth-success' }, '${requestUrl.origin}');
+                console.log('Message sent to parent window');
+              } catch (e) {
+                console.error('Could not send message to parent:', e);
+              }
             }
-            // Try to close the window
-            window.close();
-            // Fallback redirect after a delay
+            
+            // Try to close after a short delay to ensure message is sent
             setTimeout(() => {
-              window.location.href = '/setup?google_success=true';
-            }, 2000);
+              try {
+                window.close();
+              } catch (e) {
+                console.log('Window close failed, user must close manually');
+              }
+            }, 1000);
           </script>
         </body>
       </html>
