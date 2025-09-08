@@ -93,6 +93,37 @@ export async function GET(request: NextRequest) {
     console.log('[Google OAuth Callback] Processing for user ID:', userId)
     
     // Exchange code for tokens
+    // Get environment variables (they're available at build time in route handlers)
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+    
+    console.log('[Google OAuth Callback] Token exchange params:', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      redirectUri: `${requestUrl.origin}/api/auth/google/callback`,
+      hasCode: !!code
+    })
+    
+    if (!clientId || !clientSecret) {
+      console.error('[Google OAuth Callback] Missing OAuth credentials')
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><title>Configuration Error</title></head>
+          <body>
+            <p>Configurazione OAuth mancante</p>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'google-oauth-error', error: 'config_missing' }, '${requestUrl.origin}');
+              }
+              setTimeout(() => window.close(), 2000);
+            </script>
+          </body>
+        </html>
+      `
+      return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
+    }
+    
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -100,8 +131,8 @@ export async function GET(request: NextRequest) {
       },
       body: new URLSearchParams({
         code,
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
-        client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+        client_id: clientId,
+        client_secret: clientSecret,
         redirect_uri: `${requestUrl.origin}/api/auth/google/callback`,
         grant_type: 'authorization_code',
       }),
@@ -109,17 +140,22 @@ export async function GET(request: NextRequest) {
     
     const tokens = await tokenResponse.json()
     
+    console.log('[Google OAuth Callback] Token response status:', tokenResponse.status)
+    console.log('[Google OAuth Callback] Token response:', JSON.stringify(tokens))
+    
     if (tokens.error) {
       console.error('[Google OAuth Callback] Token exchange error:', tokens.error)
+      console.error('[Google OAuth Callback] Token error description:', tokens.error_description)
       const html = `
         <!DOCTYPE html>
         <html>
           <head><title>Token Error</title></head>
           <body>
             <p>Errore nello scambio del token: ${tokens.error}</p>
+            <p>${tokens.error_description || ''}</p>
             <script>
               if (window.opener) {
-                window.opener.postMessage({ type: 'google-oauth-error', error: 'token_exchange' }, '${requestUrl.origin}');
+                window.opener.postMessage({ type: 'google-oauth-error', error: 'token_exchange', details: '${tokens.error_description || tokens.error}' }, '${requestUrl.origin}');
               }
               setTimeout(() => window.close(), 2000);
             </script>
