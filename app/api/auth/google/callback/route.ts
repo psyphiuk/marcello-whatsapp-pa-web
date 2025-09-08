@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     
     console.log('[Google OAuth Callback] Credentials stored successfully')
     
-    // Close the popup window via JavaScript
+    // Close the popup window and notify parent
     const html = `
       <!DOCTYPE html>
       <html>
@@ -89,11 +89,16 @@ export async function GET(request: NextRequest) {
         <body>
           <p>Connessione con Google completata! Questa finestra si chiuderà automaticamente.</p>
           <script>
+            // Try to notify parent window first
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-success' }, '${requestUrl.origin}');
+            }
+            // Try to close the window
             window.close();
-            // Fallback if window.close() doesn't work
+            // Fallback redirect after a delay
             setTimeout(() => {
               window.location.href = '/setup?google_success=true';
-            }, 1000);
+            }, 2000);
           </script>
         </body>
       </html>

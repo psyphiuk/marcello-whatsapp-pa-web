@@ -74,6 +74,11 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Check for existing Google credentials on mount
+  useEffect(() => {
+    checkCredentials()
+  }, [])
+
   const handleGoogleConnect = async () => {
     setConnecting(true)
     setError(null)
@@ -101,10 +106,27 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
       // Open OAuth flow in new window
       const authWindow = window.open(googleAuthUrl, 'google-auth', 'width=500,height=600')
       
-      // Listen for OAuth callback
+      // Listen for postMessage from OAuth callback
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin === window.location.origin && event.data?.type === 'google-oauth-success') {
+          console.log('[Google OAuth] Success message received')
+          window.removeEventListener('message', handleMessage)
+          if (authWindow && !authWindow.closed) {
+            authWindow.close()
+          }
+          clearInterval(checkAuth)
+          // Check if credentials were stored
+          checkCredentials()
+        }
+      }
+      
+      window.addEventListener('message', handleMessage)
+      
+      // Also check if window is closed manually
       const checkAuth = setInterval(() => {
         if (authWindow?.closed) {
           clearInterval(checkAuth)
+          window.removeEventListener('message', handleMessage)
           // Check if credentials were stored
           checkCredentials()
         }
@@ -116,20 +138,25 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
   }
 
   const checkCredentials = async () => {
+    console.log('[Google OAuth] Checking credentials...')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('credentials')
           .select('*')
           .eq('customer_id', user.id)
           .eq('service', 'google')
           .single()
         
+        console.log('[Google OAuth] Credentials check result:', { data, error })
+        
         if (data) {
+          console.log('[Google OAuth] Credentials found, marking as connected')
           setConnected(true)
           setConnecting(false)
         } else {
+          console.log('[Google OAuth] No credentials found')
           setError('Credenziali non trovate. Riprova.')
           setConnecting(false)
         }
