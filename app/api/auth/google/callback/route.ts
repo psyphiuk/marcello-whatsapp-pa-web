@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     
     console.log('[Google OAuth Callback] Credentials stored successfully')
     
-    // Close the popup window and notify parent
+    // Return success page that notifies parent and closes
     const html = `
       <!DOCTYPE html>
       <html>
@@ -113,24 +113,46 @@ export async function GET(request: NextRequest) {
             <p>Puoi chiudere questa finestra.</p>
           </div>
           <script>
-            // Notify parent window
-            if (window.opener && !window.opener.closed) {
-              try {
-                window.opener.postMessage({ type: 'google-oauth-success' }, '${requestUrl.origin}');
-                console.log('Message sent to parent window');
-              } catch (e) {
-                console.error('Could not send message to parent:', e);
+            console.log('OAuth callback: Attempting to notify parent window');
+            
+            // Multiple attempts to notify parent
+            function notifyParent() {
+              // Try window.opener
+              if (window.opener && !window.opener.closed) {
+                try {
+                  window.opener.postMessage({ type: 'google-oauth-success', timestamp: Date.now() }, '${requestUrl.origin}');
+                  console.log('Message sent via window.opener');
+                } catch (e) {
+                  console.error('window.opener postMessage failed:', e);
+                }
+              }
+              
+              // Try parent (in case it's an iframe)
+              if (window.parent && window.parent !== window) {
+                try {
+                  window.parent.postMessage({ type: 'google-oauth-success', timestamp: Date.now() }, '${requestUrl.origin}');
+                  console.log('Message sent via window.parent');
+                } catch (e) {
+                  console.error('window.parent postMessage failed:', e);
+                }
               }
             }
             
-            // Try to close after a short delay to ensure message is sent
+            // Send message immediately
+            notifyParent();
+            
+            // Try again after a short delay
+            setTimeout(notifyParent, 500);
+            
+            // Attempt to close the window
             setTimeout(() => {
               try {
                 window.close();
+                console.log('Window close attempted');
               } catch (e) {
-                console.log('Window close failed, user must close manually');
+                console.log('Window close failed:', e);
               }
-            }, 1000);
+            }, 1500);
           </script>
         </body>
       </html>

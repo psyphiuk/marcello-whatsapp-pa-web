@@ -108,15 +108,19 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
       
       // Listen for postMessage from OAuth callback
       const handleMessage = (event: MessageEvent) => {
+        console.log('[Google OAuth] Message received:', event.data, 'from:', event.origin)
         if (event.origin === window.location.origin && event.data?.type === 'google-oauth-success') {
-          console.log('[Google OAuth] Success message received')
+          console.log('[Google OAuth] Success message confirmed!')
           window.removeEventListener('message', handleMessage)
           if (authWindow && !authWindow.closed) {
             authWindow.close()
           }
           clearInterval(checkAuth)
           // Check if credentials were stored
-          setTimeout(() => checkCredentials(), 500)
+          setTimeout(() => {
+            console.log('[Google OAuth] Checking credentials after success message')
+            checkCredentials()
+          }, 500)
         }
       }
       
@@ -234,16 +238,33 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
       {connected ? (
         <div className={styles.success}>
           ✓ Account Google collegato con successo!
+          <br />
+          <button 
+            onClick={() => checkCredentials()} 
+            style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7 }}
+          >
+            Verifica credenziali
+          </button>
         </div>
       ) : (
-        <button
-          onClick={handleGoogleConnect}
-          className={styles.googleConnectButton}
-          disabled={connecting}
-        >
-          <span className={styles.googleIcon}>G</span>
-          {connecting ? 'Connessione in corso...' : 'Collega Account Google'}
-        </button>
+        <>
+          <button
+            onClick={handleGoogleConnect}
+            className={styles.googleConnectButton}
+            disabled={connecting}
+          >
+            <span className={styles.googleIcon}>G</span>
+            {connecting ? 'Connessione in corso...' : 'Collega Account Google'}
+          </button>
+          {connecting && (
+            <button 
+              onClick={() => checkCredentials()} 
+              style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7 }}
+            >
+              Controlla stato connessione
+            </button>
+          )}
+        </>
       )}
 
       <div className={styles.privacy}>
@@ -258,7 +279,12 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
           Indietro
         </button>
         <button
-          onClick={() => onNext({ googleConnected: connected })}
+          onClick={() => {
+            console.log('[Google OAuth] Continue clicked, connected:', connected)
+            if (connected) {
+              onNext({ googleConnected: connected })
+            }
+          }}
           className="button button-primary"
           disabled={!connected}
         >
