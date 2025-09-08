@@ -84,10 +84,19 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
     setError(null)
     
     try {
+      // Get current user first
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setError('Sessione scaduta. Ricarica la pagina e riprova.')
+        setConnecting(false)
+        return
+      }
+      
       // Debug: Check if Google Client ID is set
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       console.log('[Google OAuth] Client ID present:', !!clientId)
       console.log('[Google OAuth] Client ID starts with:', clientId?.substring(0, 20))
+      console.log('[Google OAuth] User ID:', user.id)
       
       if (!clientId || clientId === 'your_google_client_id') {
         setError('Google OAuth non configurato. Contatta l\'amministratore.')
@@ -95,10 +104,13 @@ function GoogleConnectionStep({ onNext, onBack, data }: StepProps) {
         return
       }
       
+      // Create state parameter with user ID
+      const state = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }))
+      
       // Initialize OAuth flow
       const redirectUrl = `${window.location.origin}/api/auth/google/callback`
       const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/gmail.modify')
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`
       
       console.log('[Google OAuth] Redirect URL:', redirectUrl)
       console.log('[Google OAuth] Opening auth window...')

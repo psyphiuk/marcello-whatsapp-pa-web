@@ -6,9 +6,11 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
+  const state = requestUrl.searchParams.get('state')
   
   console.log('[Google OAuth Callback] Received callback')
   console.log('[Google OAuth Callback] Code present:', !!code)
+  console.log('[Google OAuth Callback] State present:', !!state)
   console.log('[Google OAuth Callback] Error:', error)
   
   // Check for OAuth errors
@@ -52,34 +54,43 @@ export async function GET(request: NextRequest) {
     return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
   }
   
+  // Decode state to get user ID
+  let userId: string | null = null
+  try {
+    if (state) {
+      const decoded = JSON.parse(atob(state))
+      userId = decoded.userId
+      console.log('[Google OAuth Callback] Decoded user ID from state:', userId)
+    }
+  } catch (e) {
+    console.error('[Google OAuth Callback] Failed to decode state:', e)
+  }
+  
+  if (!userId) {
+    console.error('[Google OAuth Callback] No user ID in state')
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>Invalid State</title></head>
+        <body>
+          <p>Stato non valido. Riprova.</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-error', error: 'invalid_state' }, '${requestUrl.origin}');
+            }
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
+  }
+  
   const cookieStore = cookies()
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
   
   try {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      console.error('[Google OAuth Callback] No authenticated user')
-      const html = `
-        <!DOCTYPE html>
-        <html>
-          <head><title>Authentication Required</title></head>
-          <body>
-            <p>Sessione non autenticata. Per favore accedi prima.</p>
-            <script>
-              if (window.opener) {
-                window.opener.postMessage({ type: 'google-oauth-error', error: 'not_authenticated' }, '${requestUrl.origin}');
-              }
-              setTimeout(() => window.close(), 2000);
-            </script>
-          </body>
-        </html>
-      `
-      return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
-    }
-    
-    console.log('[Google OAuth Callback] Processing for user:', user.email)
+    console.log('[Google OAuth Callback] Processing for user ID:', userId)
     
     // Exchange code for tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -120,11 +131,11 @@ export async function GET(request: NextRequest) {
     
     console.log('[Google OAuth Callback] Tokens received, storing credentials')
     
-    // Store credentials in database
+    // Store credentials in database using the user ID from state
     const { error: dbError } = await supabase
       .from('credentials')
       .upsert({
-        customer_id: user.id,
+        customer_id: userId,
         service: 'google',
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
