@@ -97,6 +97,15 @@ export async function GET(request: NextRequest) {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
     
+    // Debug: Log environment variable values (first few chars only for security)
+    console.log('[Google OAuth Callback] Environment check:', {
+      clientIdStart: clientId?.substring(0, 10),
+      clientSecretStart: clientSecret?.substring(0, 10),
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      envKeys: Object.keys(process.env).filter(k => k.includes('GOOGLE')).join(', ')
+    })
+    
     console.log('[Google OAuth Callback] Token exchange params:', {
       hasClientId: !!clientId,
       hasClientSecret: !!clientSecret,
