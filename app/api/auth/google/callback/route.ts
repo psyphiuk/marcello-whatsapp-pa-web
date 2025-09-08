@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
+// Get environment variables at module load time
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+
+console.log('[Google OAuth Module] Environment variables loaded:', {
+  hasClientId: !!GOOGLE_CLIENT_ID,
+  hasClientSecret: !!GOOGLE_CLIENT_SECRET,
+  clientIdStart: GOOGLE_CLIENT_ID?.substring(0, 10),
+  clientSecretStart: GOOGLE_CLIENT_SECRET?.substring(0, 10)
+})
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
@@ -93,18 +104,9 @@ export async function GET(request: NextRequest) {
     console.log('[Google OAuth Callback] Processing for user ID:', userId)
     
     // Exchange code for tokens
-    // Get environment variables (they're available at build time in route handlers)
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
-    
-    // Debug: Log environment variable values (first few chars only for security)
-    console.log('[Google OAuth Callback] Environment check:', {
-      clientIdStart: clientId?.substring(0, 10),
-      clientSecretStart: clientSecret?.substring(0, 10),
-      hasClientId: !!clientId,
-      hasClientSecret: !!clientSecret,
-      envKeys: Object.keys(process.env).filter(k => k.includes('GOOGLE')).join(', ')
-    })
+    // Use module-level environment variables
+    const clientId = GOOGLE_CLIENT_ID
+    const clientSecret = GOOGLE_CLIENT_SECRET
     
     console.log('[Google OAuth Callback] Token exchange params:', {
       hasClientId: !!clientId,
