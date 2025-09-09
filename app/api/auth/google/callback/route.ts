@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 
 // Get environment variables at module load time
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -97,8 +96,31 @@ export async function GET(request: NextRequest) {
     return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
   }
   
-  const cookieStore = cookies()
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+  // Use service role client to bypass RLS
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[Google OAuth Callback] Missing Supabase configuration')
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head><title>Configuration Error</title></head>
+        <body>
+          <p>Configurazione Supabase mancante</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'google-oauth-error', error: 'supabase_config_missing' }, '${requestUrl.origin}');
+            }
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } })
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
   
   try {
     console.log('[Google OAuth Callback] Processing for user ID:', userId)
