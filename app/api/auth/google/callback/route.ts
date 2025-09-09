@@ -184,10 +184,13 @@ export async function GET(request: NextRequest) {
       .upsert({
         customer_id: userId,
         service: 'google',
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        scopes: tokens.scope,
+        credentials: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token,
+          token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+          scopes: tokens.scope,
+        },
+        expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
       })
     
     if (dbError) {
