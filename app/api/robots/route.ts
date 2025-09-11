@@ -9,7 +9,8 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /onboarding/
+Disallow: /setup
+Disallow: /payment-success
 Disallow: /.well-known/
 
 # Sitemap

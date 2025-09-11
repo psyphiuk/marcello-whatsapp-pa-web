@@ -192,7 +192,7 @@ export default function Dashboard() {
               </div>
             </div>
             {!googleConnected && (
-              <Link href="/onboarding/setup" className={styles.setupLink}>
+              <Link href="/setup" className={styles.setupLink}>
                 Completa la configurazione →
               </Link>
             )}

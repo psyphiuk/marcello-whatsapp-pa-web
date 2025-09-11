@@ -178,7 +178,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       payment_method_types: ['card', 'sepa_debit'],
       line_items: lineItems,
       mode: 'subscription',
-      success_url: `${appUrl}/onboarding/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/setup`,
       customer_email: email,
       metadata: {
