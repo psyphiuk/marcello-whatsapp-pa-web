@@ -166,13 +166,20 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       quantity: 1
     })
 
+    // Get the base URL and ensure it has a proper scheme
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    // Ensure URL has a scheme (add https:// if missing)
+    const appUrl = baseUrl.startsWith('http://') || baseUrl.startsWith('https://') 
+      ? baseUrl 
+      : `https://${baseUrl}`
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'sepa_debit'],
       line_items: lineItems,
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/setup`,
+      success_url: `${appUrl}/onboarding/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/setup`,
       customer_email: email,
       metadata: {
         customer_id: customerId,
