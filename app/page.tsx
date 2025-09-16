@@ -30,7 +30,7 @@ export default function Home() {
             </p>
             <div className={styles.heroCta}>
               <Link href="/signup" className="button button-primary button-large">
-                Inizia Gratis
+                Inizia Ora
               </Link>
               <Link href="#demo" className="button button-outline button-large">
                 Guarda la Demo
@@ -145,7 +145,7 @@ export default function Home() {
                 <li>✓ Supporto email</li>
               </ul>
               <Link href="/signup?plan=basic" className="button button-outline">
-                Inizia con Basic
+                Scegli Basic
               </Link>
             </div>
             <div className={`${styles.pricingCard} ${styles.featured}`}>
@@ -164,7 +164,7 @@ export default function Home() {
                 <li>✓ Backup automatici</li>
               </ul>
               <Link href="/signup?plan=pro" className="button button-primary">
-                Inizia con Professional
+                Scegli Professional
               </Link>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function Home() {
               automatizzato le loro attività quotidiane
             </p>
             <Link href="/signup" className="button button-secondary button-large">
-              Inizia la Prova Gratuita
+              Attiva il Servizio
             </Link>
           </div>
         </div>
