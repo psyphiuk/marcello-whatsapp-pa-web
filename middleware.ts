@@ -1,72 +1,115 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  console.log('[Middleware] Checking path:', req.nextUrl.pathname)
+export async function middleware(request: NextRequest) {
+  console.log('[Middleware] Checking path:', request.nextUrl.pathname)
 
   // Create a response and pass it to the middleware client
-  const res = NextResponse.next()
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-  try {
-    const supabase = createMiddlewareClient({ req, res })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
 
-    // IMPORTANT: Refresh session to ensure it's valid
-    const { data: { session }, error } = await supabase.auth.getSession()
+  // IMPORTANT: Refresh session to ensure it's valid
+  const { data: { session }, error } = await supabase.auth.getSession()
 
-    if (error) {
-      console.error('[Middleware] Error getting session:', error)
+  if (error) {
+    console.error('[Middleware] Error getting session:', error)
+  }
+
+  console.log('[Middleware] Session exists:', !!session, session?.user?.email)
+
+  // For dashboard route, check authentication
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!session) {
+      console.log('[Middleware] No session for dashboard, redirecting to login')
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('from', 'dashboard')
+      return NextResponse.redirect(loginUrl)
+    }
+    // Session exists, allow access
+    console.log('[Middleware] Session valid for dashboard access')
+  }
+
+  // Protect admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!session) {
+      console.log('[Middleware] No session for admin route')
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    console.log('[Middleware] Session exists:', !!session, session?.user?.email)
+    // Check if user is admin
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('settings')
+      .eq('id', session.user.id)
+      .single()
 
-    // For dashboard route, check authentication
-    if (req.nextUrl.pathname.startsWith('/dashboard')) {
-      if (!session) {
-        console.log('[Middleware] No session for dashboard, redirecting to login')
-        const loginUrl = new URL('/login', req.url)
-        loginUrl.searchParams.set('from', 'dashboard')
-        return NextResponse.redirect(loginUrl)
-      }
-      // Session exists, allow access
-      console.log('[Middleware] Session valid for dashboard access')
+    if (!customer?.settings?.is_admin) {
+      console.log('[Middleware] User is not admin')
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
+  }
 
-    // Protect admin routes
-    if (req.nextUrl.pathname.startsWith('/admin')) {
-      if (!session) {
-        console.log('[Middleware] No session for admin route')
-        return NextResponse.redirect(new URL('/login', req.url))
-      }
-
-      // Check if user is admin
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('settings')
-        .eq('id', session.user.id)
-        .single()
-
-      if (!customer?.settings?.is_admin) {
-        console.log('[Middleware] User is not admin')
-        return NextResponse.redirect(new URL('/dashboard', req.url))
-      }
+  // For other protected routes
+  if (request.nextUrl.pathname.startsWith('/settings')) {
+    if (!session) {
+      console.log('[Middleware] No session for settings')
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
     }
-
-    // For other protected routes
-    if (req.nextUrl.pathname.startsWith('/settings')) {
-      if (!session) {
-        console.log('[Middleware] No session for settings')
-        const loginUrl = new URL('/login', req.url)
-        return NextResponse.redirect(loginUrl)
-      }
-    }
-
-  } catch (error) {
-    console.error('[Middleware] Unexpected error:', error)
   }
 
   // ALWAYS return the response with updated cookies
-  return res
+  return response
 }
 
 export const config = {
