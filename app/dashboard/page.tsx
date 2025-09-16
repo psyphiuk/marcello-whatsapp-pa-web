@@ -27,6 +27,8 @@ export default function Dashboard() {
   const [usage, setUsage] = useState<UsageData[]>([])
   const [loading, setLoading] = useState(true)
   const [googleConnected, setGoogleConnected] = useState(false)
+  const [sendingTest, setSendingTest] = useState(false)
+  const [testMessageStatus, setTestMessageStatus] = useState<string | null>(null)
 
   useEffect(() => {
     loadDashboardData()
@@ -118,6 +120,41 @@ export default function Dashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const sendTestMessage = async () => {
+    if (!customer?.phone_numbers?.[0]) {
+      setTestMessageStatus('Nessun numero autorizzato configurato')
+      return
+    }
+
+    setSendingTest(true)
+    setTestMessageStatus(null)
+
+    try {
+      const response = await fetch('/api/whatsapp/send-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phoneNumber: customer.phone_numbers[0]
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setTestMessageStatus('✅ Messaggio di test inviato! Controlla WhatsApp.')
+      } else {
+        setTestMessageStatus(`❌ Errore: ${data.error || 'Impossibile inviare il messaggio'}`)
+      }
+    } catch (error) {
+      console.error('Error sending test message:', error)
+      setTestMessageStatus('❌ Errore di connessione')
+    } finally {
+      setSendingTest(false)
+    }
   }
 
   const getTotalMessages = () => {
@@ -270,12 +307,40 @@ export default function Dashboard() {
             </div>
 
             <div className={styles.actionCard}>
-              <h3>💬 Come Funziona</h3>
-              <p>Dal tuo numero autorizzato:</p>
-              <div className={styles.testMessage}>
-                "Ciao, cosa puoi fare?"
-              </div>
-              <small>Invia questo messaggio al numero del bot per iniziare</small>
+              <h3>💬 Test del Servizio</h3>
+              <p>Ricevi un messaggio di benvenuto:</p>
+              <button
+                onClick={sendTestMessage}
+                disabled={sendingTest || !customer?.phone_numbers?.[0]}
+                className={styles.testButton}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: sendingTest ? '#ccc' : 'var(--secondary-color)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--border-radius)',
+                  cursor: sendingTest ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  marginTop: '1rem',
+                  width: '100%'
+                }}
+              >
+                {sendingTest ? 'Invio in corso...' : 'Invia messaggio di test'}
+              </button>
+              {testMessageStatus && (
+                <div style={{
+                  marginTop: '0.5rem',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  fontSize: '0.85rem',
+                  background: testMessageStatus.includes('✅') ? '#d4edda' : '#f8d7da',
+                  color: testMessageStatus.includes('✅') ? '#155724' : '#721c24',
+                  textAlign: 'center'
+                }}>
+                  {testMessageStatus}
+                </div>
+              )}
+              <small>Il bot invierà un messaggio al tuo numero principale</small>
             </div>
 
             <div className={styles.actionCard}>
