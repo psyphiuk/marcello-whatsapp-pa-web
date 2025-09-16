@@ -355,6 +355,33 @@ export default function Dashboard() {
               >
                 🔍 Debug Configuration
               </button>
+              <button
+                onClick={async () => {
+                  const response = await fetch('/api/whatsapp/webhook-status')
+                  const data = await response.json()
+                  console.log('WhatsApp Webhook Status:', data)
+
+                  // Check for sandbox/test mode
+                  if (data.testMode) {
+                    alert('⚠️ WhatsApp is in TEST/SANDBOX mode! Recipients must be pre-registered. Check console for details.')
+                  } else {
+                    alert('WhatsApp status checked - see console for details')
+                  }
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--border-radius)',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  marginTop: '0.5rem',
+                  width: '100%'
+                }}
+              >
+                📊 Check WhatsApp Status
+              </button>
               {testMessageStatus && (
                 <div style={{
                   marginTop: '0.5rem',
