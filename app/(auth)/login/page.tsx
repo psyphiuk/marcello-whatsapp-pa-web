@@ -66,10 +66,10 @@ export default function LoginPage() {
 
         if (!customer || !hasCompletedOnboarding) {
           console.log('[Login] User needs to complete setup/payment, redirecting to setup...')
-          router.push('/setup')
+          window.location.href = '/setup'
         } else {
           console.log('[Login] User has completed onboarding, redirecting to dashboard...')
-          router.push('/dashboard')
+          window.location.href = '/dashboard'
         }
       } catch (error) {
         console.error('[Login] Error checking session:', error)
@@ -141,16 +141,16 @@ export default function LoginPage() {
 
       if (!customer || !hasCompletedOnboarding) {
         console.log('[Login] User needs to complete setup/payment, redirecting to setup...')
-        // Add delay to ensure session cookies are properly set
+        // Use window.location for more reliable redirect
         setTimeout(() => {
-          router.push('/setup')
-        }, 1000)
+          window.location.href = '/setup'
+        }, 500)
       } else {
         console.log('[Login] Onboarding completed, redirecting to dashboard...')
-        // Add delay to ensure session cookies are properly set
+        // Use window.location for more reliable redirect
         setTimeout(() => {
-          router.push('/dashboard')
-        }, 1000)
+          window.location.href = '/dashboard'
+        }, 500)
       }
     } catch (error: any) {
       console.error('Login error caught:', error)
