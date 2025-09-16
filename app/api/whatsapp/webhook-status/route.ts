@@ -60,18 +60,30 @@ export async function GET(request: NextRequest) {
 
     const templatesData = await templatesResponse.json()
 
+    // Extract the actual phone number from the API response
+    const actualPhoneNumber = phoneDetails.display_phone_number || phoneDetails.verified_name || 'Not found'
+
     return NextResponse.json({
       phoneNumberDetails: phoneDetails,
+      actualBusinessNumber: actualPhoneNumber,
       webhookStatus: webhookData,
       templates: templatesData,
       environment: {
         phoneNumberId,
         businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
         hasWebhookToken: !!process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
-        displayPhoneNumber: process.env.WHATSAPP_DISPLAY_PHONE_NUMBER
+        displayPhoneNumber: process.env.WHATSAPP_DISPLAY_PHONE_NUMBER,
+        configuredDisplayNumber: process.env.WHATSAPP_DISPLAY_PHONE_NUMBER
       },
       testMode: phoneDetails.quality_rating === 'GREEN' ? false : true,
+      importantInfo: {
+        yourNumber: '447925533340 (needs to be added to Meta allowed list)',
+        botNumber: actualPhoneNumber + ' (customers send messages TO this number)',
+        whatToDo: 'Add 447925533340 to the allowed test numbers in Meta dashboard'
+      },
       notes: [
+        'The BOT number is: ' + actualPhoneNumber,
+        'YOUR number (447925533340) needs to be added to Meta test users',
         'If in test/sandbox mode, recipient numbers must be added to the test users list',
         'Check if the phone number has WhatsApp installed',
         'Verify the number format matches WhatsApp requirements',
