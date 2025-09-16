@@ -145,9 +145,16 @@ export default function Dashboard() {
       const data = await response.json()
 
       if (response.ok) {
-        setTestMessageStatus('✅ Messaggio di test inviato! Controlla WhatsApp.')
+        setTestMessageStatus(`✅ Messaggio di test inviato! Controlla WhatsApp. (Numero: ${data.phone_sent_to})`)
+        console.log('Test message sent successfully:', data)
       } else {
+        console.error('Test message error:', data)
         setTestMessageStatus(`❌ Errore: ${data.error || 'Impossibile inviare il messaggio'}`)
+
+        // Log detailed error for debugging
+        if (data.details) {
+          console.error('Error details:', data.details)
+        }
       }
     } catch (error) {
       console.error('Error sending test message:', error)
@@ -326,6 +333,27 @@ export default function Dashboard() {
                 }}
               >
                 {sendingTest ? 'Invio in corso...' : 'Invia messaggio di test'}
+              </button>
+              <button
+                onClick={async () => {
+                  const response = await fetch('/api/whatsapp/check-config')
+                  const data = await response.json()
+                  console.log('WhatsApp Configuration:', data)
+                  alert('Check console for WhatsApp configuration details')
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--border-radius)',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                  marginTop: '0.5rem',
+                  width: '100%'
+                }}
+              >
+                🔍 Debug Configuration
               </button>
               {testMessageStatus && (
                 <div style={{
