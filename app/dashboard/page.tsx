@@ -242,29 +242,40 @@ export default function Dashboard() {
         </div>
 
         <div className={styles.quickActions}>
-          <h2>Azioni Rapide</h2>
+          <h2>Come Configurare WhatsApp</h2>
+          <div className={styles.setupSteps} style={{background: 'rgba(0, 255, 136, 0.05)', padding: '1.5rem', borderRadius: 'var(--border-radius)', marginBottom: '1.5rem', border: '1px solid rgba(0, 255, 136, 0.2)'}}>
+            <p style={{marginBottom: '1rem', color: 'var(--text-primary)'}}>
+              <strong>📋 Flusso dei Messaggi:</strong>
+            </p>
+            <ol style={{marginLeft: '1.5rem', lineHeight: '1.8', color: 'var(--text-secondary)'}}>
+              <li>Tu invii un messaggio dal tuo numero autorizzato al numero del bot</li>
+              <li>Il bot elabora la richiesta con l'IA</li>
+              <li>Il bot ti risponde automaticamente sullo stesso numero</li>
+              <li>Solo i numeri autorizzati nelle impostazioni possono interagire con il bot</li>
+            </ol>
+          </div>
           <div className={styles.actionCards}>
             <div className={styles.actionCard}>
-              <h3>📱 Numero WhatsApp</h3>
+              <h3>📱 Numero Bot WhatsApp</h3>
               <p>Salva questo numero nei tuoi contatti:</p>
               <div className={styles.phoneNumber}>
                 {customer?.settings?.whatsapp_assistant_number || 'Non configurato'}
               </div>
-              <small>Il numero del tuo assistente personale</small>
+              <small>Il bot invierà messaggi da questo numero</small>
               {!customer?.settings?.whatsapp_assistant_number && (
                 <Link href="/settings" className={styles.configureLink}>
-                  Configura numero →
+                  Configura numero bot →
                 </Link>
               )}
             </div>
 
             <div className={styles.actionCard}>
-              <h3>💬 Test Messaggio</h3>
-              <p>Invia un messaggio di prova:</p>
+              <h3>💬 Come Funziona</h3>
+              <p>Dal tuo numero autorizzato:</p>
               <div className={styles.testMessage}>
                 "Ciao, cosa puoi fare?"
               </div>
-              <small>L'assistente ti spiegherà le sue funzionalità</small>
+              <small>Invia questo messaggio al numero del bot per iniziare</small>
             </div>
 
             <div className={styles.actionCard}>
@@ -280,7 +291,10 @@ export default function Dashboard() {
         </div>
 
         <div className={styles.phoneNumbers}>
-          <h2>Numeri Autorizzati</h2>
+          <h2>I Tuoi Numeri Autorizzati</h2>
+          <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>
+            Solo questi numeri possono inviare messaggi al bot e ricevere risposte:
+          </p>
           <div className={styles.phoneList}>
             {customer?.phone_numbers.map((phone, index) => (
               <div key={index} className={styles.phoneItem}>
@@ -290,7 +304,7 @@ export default function Dashboard() {
             ))}
           </div>
           <Link href="/settings" className={styles.manageLink}>
-            Gestisci numeri →
+            Gestisci i tuoi numeri →
           </Link>
         </div>
 

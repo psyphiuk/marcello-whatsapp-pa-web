@@ -191,9 +191,9 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.section}>
-          <h2>Numero Assistente WhatsApp</h2>
+          <h2>Numero Bot WhatsApp</h2>
           <div className={styles.formGroup}>
-            <label htmlFor="whatsappNumber">Numero WhatsApp del tuo Assistente</label>
+            <label htmlFor="whatsappNumber">Numero WhatsApp del Bot (Assistente IA)</label>
             <input
               id="whatsappNumber"
               type="text"
@@ -201,14 +201,14 @@ export default function SettingsPage() {
               onChange={(e) => setWhatsappNumber(e.target.value)}
               placeholder="+39 XXX XXX XXXX"
             />
-            <small>Questo è il numero che i tuoi clienti dovranno salvare per utilizzare l'assistente</small>
+            <small>Questo è il numero del bot che invierà messaggi ai numeri autorizzati sotto. I tuoi clienti devono salvare questo numero per ricevere risposte.</small>
           </div>
         </div>
 
         <div className={styles.section}>
-          <h2>Numeri Autorizzati</h2>
+          <h2>I Tuoi Numeri WhatsApp (Autorizzati)</h2>
           <p className={styles.sectionDescription}>
-            Solo questi numeri possono inviare messaggi all'assistente
+            Solo questi numeri possono inviare messaggi al bot e ricevere risposte. Inserisci qui i numeri WhatsApp tuoi e dei tuoi collaboratori.
           </p>
           {phoneNumbers.map((phone, index) => (
             <div key={index} className={styles.phoneRow}>
