@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get WhatsApp configuration
-    const config = {
+    const config: any = {
       WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || 'NOT SET',
       WHATSAPP_BUSINESS_ACCOUNT_ID: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || 'NOT SET',
       WHATSAPP_DISPLAY_PHONE_NUMBER: process.env.WHATSAPP_DISPLAY_PHONE_NUMBER || 'NOT SET',
