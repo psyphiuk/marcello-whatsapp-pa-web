@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
-        
+
         // Log failed payment
         await supabase
           .from('billing_events')
@@ -167,8 +167,44 @@ export async function POST(request: NextRequest) {
             customer_stripe_id: invoice.customer,
             created_at: new Date().toISOString()
           })
-        
-        // TODO: Send notification to customer
+
+        // Send notification to customer
+        try {
+          // Find customer by stripe_customer_id
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('id, email, full_name')
+            .eq('stripe_customer_id', invoice.customer)
+            .single()
+
+          if (customer) {
+            // Log notification in database
+            await supabase
+              .from('notifications')
+              .insert({
+                customer_id: customer.id,
+                type: 'payment_failed',
+                title: 'Pagamento non riuscito',
+                message: `Il pagamento di €${(invoice.amount_due / 100).toFixed(2)} non è andato a buon fine. Aggiorna il tuo metodo di pagamento per continuare a utilizzare il servizio.`,
+                email_sent: false, // Will be processed by notification service
+                created_at: new Date().toISOString()
+              })
+
+            // Update customer subscription status
+            await supabase
+              .from('customers')
+              .update({
+                subscription_status: 'payment_failed'
+              })
+              .eq('id', customer.id)
+
+            console.log(`Payment failed notification created for customer ${customer.email}`)
+          }
+        } catch (notificationError) {
+          console.error('Failed to create payment notification:', notificationError)
+          // Don't fail the webhook if notification fails
+        }
+
         break
       }
     }
