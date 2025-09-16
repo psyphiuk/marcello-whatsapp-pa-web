@@ -248,9 +248,14 @@ export default function Dashboard() {
               <h3>📱 Numero WhatsApp</h3>
               <p>Salva questo numero nei tuoi contatti:</p>
               <div className={styles.phoneNumber}>
-                +39 351 924 5678
+                {customer?.settings?.whatsapp_assistant_number || 'Non configurato'}
               </div>
               <small>Il numero del tuo assistente personale</small>
+              {!customer?.settings?.whatsapp_assistant_number && (
+                <Link href="/settings" className={styles.configureLink}>
+                  Configura numero →
+                </Link>
+              )}
             </div>
 
             <div className={styles.actionCard}>

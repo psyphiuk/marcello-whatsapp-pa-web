@@ -317,6 +317,18 @@
   font-weight: 600;
 }
 
+.configureLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--secondary-color);
+  text-decoration: none;
+  font-size: 0.875rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .testMessage {
   padding: 0.75rem;
   background-color: var(--secondary-light);
