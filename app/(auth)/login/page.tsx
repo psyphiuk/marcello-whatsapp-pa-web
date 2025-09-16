@@ -17,12 +17,13 @@ export default function LoginPage() {
 
   // Check if user is already logged in and redirect (only once)
   useEffect(() => {
-    // Prevent running if already redirecting
-    if (isRedirecting) return
+    // Prevent running if already redirecting or loading
+    if (isRedirecting || loading) return
 
     const params = new URLSearchParams(window.location.search)
     const hasError = params.get('error')
     const hasConfirmed = params.get('confirmed')
+    const fromDashboard = params.get('from') === 'dashboard'
 
     // Check URL parameters for messages
     if (hasConfirmed === 'true') {
@@ -36,6 +37,12 @@ export default function LoginPage() {
     if (hasError === 'callback_error') {
       setError('Si è verificato un errore. Per favore, prova ad effettuare il login.')
       return // Don't check session if showing error
+    }
+
+    // Don't auto-redirect if coming from dashboard (to prevent loops)
+    if (fromDashboard) {
+      console.log('[Login] Coming from dashboard, skip auto-redirect')
+      return
     }
 
     // Check for existing session
@@ -78,7 +85,7 @@ export default function LoginPage() {
     }
 
     checkExistingSession()
-  }, [router, isRedirecting])
+  }, [router, isRedirecting, loading])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -141,16 +148,34 @@ export default function LoginPage() {
 
       if (!customer || !hasCompletedOnboarding) {
         console.log('[Login] User needs to complete setup/payment, redirecting to setup...')
-        // Use window.location for more reliable redirect
-        setTimeout(() => {
+        // Give more time for session to establish
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        // Verify session one more time before redirect
+        const { data: { session: finalSession } } = await supabase.auth.getSession()
+        if (finalSession) {
+          console.log('[Login] Session confirmed, redirecting to setup...')
           window.location.href = '/setup'
-        }, 500)
+        } else {
+          console.error('[Login] Session lost, cannot redirect')
+          setError('Errore di sessione. Riprova.')
+          setIsRedirecting(false)
+        }
       } else {
         console.log('[Login] Onboarding completed, redirecting to dashboard...')
-        // Use window.location for more reliable redirect
-        setTimeout(() => {
+        // Give more time for session to establish
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        // Verify session one more time before redirect
+        const { data: { session: finalSession } } = await supabase.auth.getSession()
+        if (finalSession) {
+          console.log('[Login] Session confirmed, redirecting to dashboard...')
           window.location.href = '/dashboard'
-        }, 500)
+        } else {
+          console.error('[Login] Session lost, cannot redirect')
+          setError('Errore di sessione. Riprova.')
+          setIsRedirecting(false)
+        }
       }
     } catch (error: any) {
       console.error('Login error caught:', error)
