@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
               stripe_subscription_id: session.subscription,
               subscription_status: 'active',
               plan: session.metadata.plan || 'basic',
+              onboarding_completed: true,
               settings: {
                 payment_completed: true,
                 payment_date: new Date().toISOString(),

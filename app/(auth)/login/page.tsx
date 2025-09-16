@@ -41,18 +41,23 @@ export default function LoginPage() {
         if (session) {
           console.log('[Login] User already logged in, checking where to redirect...')
           
-          // Check onboarding status
+          // Check payment/onboarding status
           const { data: customer } = await supabase
             .from('customers')
-            .select('onboarding_completed')
+            .select('stripe_customer_id, subscription_status, settings, onboarding_completed')
             .eq('id', session.user.id)
             .single()
-          
-          if (!customer || !customer.onboarding_completed) {
-            console.log('[Login] Redirecting logged in user to onboarding...')
+
+          // Check if onboarding/payment is completed
+          const hasCompletedOnboarding = customer?.onboarding_completed ||
+            (customer?.stripe_customer_id &&
+            (customer?.subscription_status === 'active' || customer?.settings?.payment_completed))
+
+          if (!customer || !hasCompletedOnboarding) {
+            console.log('[Login] User needs to complete setup/payment, redirecting to setup...')
             window.location.href = '/setup'
           } else {
-            console.log('[Login] Redirecting logged in user to dashboard...')
+            console.log('[Login] User has completed onboarding, redirecting to dashboard...')
             window.location.href = '/dashboard'
           }
         }
@@ -115,15 +120,20 @@ export default function LoginPage() {
       
       console.log('[Login] Session verified, checking onboarding status...')
       
-      // Check if user has completed onboarding
+      // Check if user has completed payment/onboarding
       const { data: customer } = await supabase
         .from('customers')
-        .select('onboarding_completed')
+        .select('stripe_customer_id, subscription_status, settings, onboarding_completed')
         .eq('id', data.user.id)
         .single()
-      
-      if (!customer || !customer.onboarding_completed) {
-        console.log('[Login] User needs onboarding, redirecting to setup...')
+
+      // Check if onboarding/payment is completed
+      const hasCompletedOnboarding = customer?.onboarding_completed ||
+        (customer?.stripe_customer_id &&
+        (customer?.subscription_status === 'active' || customer?.settings?.payment_completed))
+
+      if (!customer || !hasCompletedOnboarding) {
+        console.log('[Login] User needs to complete setup/payment, redirecting to setup...')
         // Add delay to ensure session cookies are properly set
         setTimeout(() => {
           window.location.href = '/setup'

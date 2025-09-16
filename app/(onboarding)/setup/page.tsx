@@ -601,6 +601,17 @@ export default function OnboardingSetup() {
 
       if (customer) {
         console.log('Loading existing customer data:', customer)
+
+        // Check if user has already completed payment
+        const hasCompletedPayment = customer.stripe_customer_id &&
+          (customer.subscription_status === 'active' || customer.settings?.payment_completed)
+
+        if (hasCompletedPayment) {
+          console.log('User has already completed payment, redirecting to dashboard')
+          router.push('/dashboard')
+          return
+        }
+
         setSetupData({
           companyName: customer.company_name || '',
           phoneNumber: customer.phone_numbers?.[0] || '',
