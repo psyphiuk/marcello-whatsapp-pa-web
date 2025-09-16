@@ -1,0 +1,266 @@
+.container {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 2rem 0;
+}
+
+.content {
+  background: white;
+  padding: 3rem 2rem;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+
+  h1 {
+    color: #1a202c;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  h2 {
+    color: #2d3748;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+}
+
+.intro {
+  font-size: 1.2rem;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.backLink {
+  display: inline-block;
+  color: #667eea;
+  text-decoration: none;
+  margin-bottom: 2rem;
+  font-weight: 500;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.categoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 2rem;
+  color: #4a5568;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #667eea;
+    color: #667eea;
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+
+    .count {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+  }
+
+  .count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    background: #f7fafc;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #667eea;
+  }
+}
+
+.faqList {
+  margin: 2rem 0;
+}
+
+.faqItem {
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  &.expanded {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  }
+}
+
+.question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f7fafc;
+  }
+
+  span:first-child {
+    flex: 1;
+    color: #2d3748;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #f7fafc;
+    border-radius: 50%;
+    color: #667eea;
+    font-size: 1.2rem;
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+}
+
+.answer {
+  padding: 0 1.5rem 1.5rem;
+  animation: slideDown 0.3s ease-out;
+
+  p {
+    color: #4a5568;
+    line-height: 1.7;
+    margin: 0;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stillNeedHelp {
+  margin-top: 4rem;
+  padding: 2.5rem;
+  background: #f7fafc;
+  border-radius: 0.5rem;
+  text-align: center;
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: #718096;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+}
+
+.helpOptions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.helpButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 2rem 1rem;
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .categories {
+    gap: 0.5rem;
+  }
+
+  .categoryButton {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .question {
+    padding: 1rem 1.25rem;
+
+    span:first-child {
+      font-size: 0.95rem;
+    }
+  }
+
+  .helpOptions {
+    flex-direction: column;
+    align-items: center;
+
+    .helpButton {
+      width: 200px;
+      text-align: center;
+    }
+  }
+}
