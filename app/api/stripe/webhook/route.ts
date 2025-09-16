@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
           // Find customer by stripe_customer_id
           const { data: customer } = await supabase
             .from('customers')
-            .select('id, email, full_name')
+            .select('id, email, company_name')
             .eq('stripe_customer_id', invoice.customer)
             .single()
 

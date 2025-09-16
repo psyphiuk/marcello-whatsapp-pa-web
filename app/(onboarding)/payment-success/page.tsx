@@ -81,7 +81,7 @@ export default function PaymentSuccess() {
               fontWeight: 'bold',
               marginBottom: '1rem'
             }}>
-              +39 XXX XXX XXXX
+              +39 351 924 5678
             </div>
             <p style={{ color: 'var(--text-secondary)' }}>
               Salva questo numero nei tuoi contatti e invia "Ciao" per iniziare

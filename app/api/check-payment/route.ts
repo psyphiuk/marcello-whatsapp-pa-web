@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Get customer details
     const { data: customer, error: customerError } = await supabase
       .from('customers')
-      .select('id, email, full_name, settings')
+      .select('id, email, company_name, settings')
       .eq('id', customerId)
       .single()
 
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       customer: {
         id: customer.id,
         email: customer.email,
-        full_name: customer.full_name,
+        company_name: customer.company_name,
         is_admin: customer.settings?.is_admin || false
       },
       payment: {
